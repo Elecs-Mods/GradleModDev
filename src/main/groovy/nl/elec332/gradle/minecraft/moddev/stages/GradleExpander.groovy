@@ -14,31 +14,30 @@ import org.gradle.api.tasks.bundling.Jar
 class GradleExpander {
 
     static void addConfig(Project project, ModDevExtension extension) {
-        if (extension.addConfigFile) {
-            File configFile = project.file "build.properties"
-            if (configFile.exists()) {
-                configFile.withReader {
-                    def prop = new Properties()
-                    prop.load(it)
-                    project.ext.config = new ConfigSlurper().parse prop
+        File configFile = project.file "build.properties"
+        if (configFile.exists()) {
+            configFile.withReader {
+                def prop = new Properties()
+                prop.load(it)
+                project.ext.config = new ConfigSlurper().parse prop
 
-                    if (Utils.isNullOrEmpty(extension.modVersion)) {
-                        extension.modVersion = project.config.mod_version
-                    }
-                    if (Utils.isNullOrEmpty(extension.modClassifier)) {
-                        extension.modClassifier = project.config.mod_classifier
-                    }
-                    if (Utils.isNullOrEmpty(extension.minecraftVersion)) {
-                        extension.minecraftVersion = project.config.minecraft_version
-                    }
-                    if (Utils.isNullOrEmpty(extension.forgeVersion)) {
-                        extension.forgeVersion = project.config.forge_version
-                    }
-                    if (Utils.isNullOrEmpty(extension.snapshotMappings)) {
-                        extension.snapshotMappings = project.config.mappings
-                    }
-                    println "Loaded configuration file"
+                //Do check, in case the plugin is applied late or in a sub-project
+                if (Utils.isNullOrEmpty(extension.modVersion)) {
+                    extension.modVersion = project.config.mod_version
                 }
+                if (Utils.isNullOrEmpty(extension.modClassifier)) {
+                    extension.modClassifier = project.config.mod_classifier
+                }
+                if (Utils.isNullOrEmpty(extension.minecraftVersion)) {
+                    extension.minecraftVersion = project.config.minecraft_version
+                }
+                if (Utils.isNullOrEmpty(extension.forgeVersion)) {
+                    extension.forgeVersion = project.config.forge_version
+                }
+                if (Utils.isNullOrEmpty(extension.snapshotMappings)) {
+                    extension.snapshotMappings = project.config.mappings
+                }
+                println "Loaded configuration file"
             }
         }
     }

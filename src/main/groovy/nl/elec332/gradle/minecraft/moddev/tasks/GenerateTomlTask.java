@@ -11,6 +11,8 @@ import org.gradle.api.tasks.TaskAction;
 
 import javax.annotation.Nonnull;
 import javax.inject.Inject;
+import java.util.ArrayList;
+import java.util.Collection;
 
 /**
  * Created by Elec332 on 2-7-2020
@@ -22,11 +24,13 @@ public class GenerateTomlTask extends AbstractGenerateTask {
     @Inject
     public GenerateTomlTask(final ModDevExtension settings) {
         super("META-INF/mods.toml");
-        mods = getProject().container(Mod.class, Mod::new);
+        setDescription(DESCRIPTION);
+        this.mods = getProject().container(Mod.class, Mod::new);
+        this.dependencies = getProject().container(Dependency.class, Dependency::new);
         getProject().afterEvaluate(p -> {
             GenerateTomlTask.Mod mod = mods.findByName(settings.modId);
             if (mod == null) {
-                mod = mods.create(settings.modId);
+                mod = this.mods.create(settings.modId);
             }
             if (!Utils.isNullOrEmpty(settings.modName)) {
                 mod.displayName = settings.modName;
@@ -35,7 +39,7 @@ public class GenerateTomlTask extends AbstractGenerateTask {
                 this.modDescription = getDescription();
             }
             if (Utils.isNullOrEmpty(mod.description) && !Utils.isNullOrEmpty(modDescription)) {
-                mod.description = modDescription;
+                mod.description = this.modDescription;
             }
             boolean mc = false, forge = false;
             for (GenerateTomlTask.Dependency dep : mod.dependencies) {
@@ -46,23 +50,31 @@ public class GenerateTomlTask extends AbstractGenerateTask {
                     forge = true;
                 }
             }
+            Collection<Dependency> cache = new ArrayList<>(this.dependencies);
+            this.dependencies.clear();
             if (!mc) {
-                mod.dependencies.create("minecraft", dep -> dep.versionRange = "[${" + TomlExtensions.MC_VERSION + "},)");
+                this.dependencies.create("minecraft", dep -> dep.versionRange = "[${" + TomlExtensions.MC_VERSION + "},)");
             }
             if (!forge) {
-                mod.dependencies.create("forge", dep -> dep.versionRange = "[${" + TomlExtensions.FORGE_VERSION + "},)");
+                this.dependencies.create("forge", dep -> dep.versionRange = "[${" + TomlExtensions.FORGE_VERSION + "},)");
             }
+            this.dependencies.addAll(cache);
             this.hasEvaluated = true;
         });
     }
 
+
+    public final NamedDomainObjectContainer<Mod> mods;
+    private final NamedDomainObjectContainer<Dependency> dependencies;
     private boolean hasEvaluated = false;
 
     public boolean hasEvaluated() {
         return hasEvaluated;
     }
 
-    public final NamedDomainObjectContainer<Mod> mods;
+    public void dependencies(Closure<?> closure) {
+        dependencies.configure(closure);
+    }
 
     public void mods(Closure<?> closure) {
         mods.configure(closure);
@@ -121,11 +133,15 @@ public class GenerateTomlTask extends AbstractGenerateTask {
                 preFile.append("credits=\"").append(credits).append("\"\n");
             }
             if (!Utils.isNullOrEmpty(authors)) {
-                preFile.append("authors=\"").append(authors).append("\"\n");
+                preFile.append("authors=\"").append(authors, 1, authors.length() - 1).append("\"\n");
             }
 
             for (Mod mod : mods) {
-                mod.appendFile(preFile);
+                if (extension.modId.equals(mod.modId)) {
+                    mod.appendFile(preFile, dependencies);
+                } else {
+                    mod.appendFile(preFile);
+                }
             }
 
             String contents = preFile.toString();
@@ -155,6 +171,10 @@ public class GenerateTomlTask extends AbstractGenerateTask {
         public String description = null;
 
         void appendFile(StringBuilder file) {
+            appendFile(file, null);
+        }
+
+        void appendFile(StringBuilder file, Collection<Dependency> additionalDeps) {
             file.append("\n");
             file.append("[[mods]]\n");
             file.append("modId=\"").append(modId).append("\"\n");
@@ -164,6 +184,11 @@ public class GenerateTomlTask extends AbstractGenerateTask {
                 throw new IllegalArgumentException("No description provided for mod: " + modId);
             }
             file.append("description=\"").append(description).append("\"\n");
+            if (additionalDeps != null) {
+                for (Dependency dep : additionalDeps) {
+                    dep.appendFile(file, modId);
+                }
+            }
             for (Dependency dep : dependencies) {
                 dep.appendFile(file, modId);
             }

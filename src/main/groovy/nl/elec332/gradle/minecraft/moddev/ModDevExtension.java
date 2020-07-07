@@ -13,8 +13,6 @@ public class ModDevExtension {
 
     public boolean fgTweaks = false;
 
-    public boolean addConfigFile = true;
-
     public boolean localBuildIdentifier = true;
 
     public boolean createDeobf = false;

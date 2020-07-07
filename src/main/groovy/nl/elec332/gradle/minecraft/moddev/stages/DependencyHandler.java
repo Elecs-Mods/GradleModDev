@@ -17,24 +17,20 @@ public class DependencyHandler {
         Configuration confModCompile = project.getConfigurations().create(ModDevPlugin.MOD_CONFIG_COMPILE);
         Configuration confModRuntime = project.getConfigurations().create(ModDevPlugin.MOD_CONFIG_RUNTIME);
 
+        confModCompile.extendsFrom(confMod);
+        confModRuntime.extendsFrom(confMod);
+
         project.afterEvaluate(p -> {
             DependencySet compileOnly = project.getConfigurations().getByName("compileOnly").getDependencies();
             DependencySet runtimeOnly = project.getConfigurations().getByName("runtimeOnly").getDependencies();
 
-            for (Dependency dependency : confMod.getDependencies()) {
-                if (!ForgeHelper.addProjectMod(project, dependency)) {
-                    dependency = ForgeHelper.deobfDep(project, dependency);
-                }
-                compileOnly.add(dependency);
-                runtimeOnly.add(dependency);
-            }
-            for (Dependency dependency : confModCompile.getDependencies()) {
+            for (Dependency dependency : confModCompile.getAllDependencies()) {
                 if (!ForgeHelper.addProjectMod(project, dependency)) {
                     dependency = ForgeHelper.deobfDep(project, dependency);
                 }
                 compileOnly.add(dependency);
             }
-            for (Dependency dependency : confModRuntime.getDependencies()) {
+            for (Dependency dependency : confModRuntime.getAllDependencies()) {
                 if (!ForgeHelper.addProjectMod(project, dependency)) {
                     dependency = ForgeHelper.deobfDep(project, dependency);
                 }

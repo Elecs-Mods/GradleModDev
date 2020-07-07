@@ -48,9 +48,9 @@ public class ModDevPlugin implements Plugin<Project> {
         GenerateTomlTask tomlTask = project.getTasks().create(TOML_TASK_NAME, GenerateTomlTask.class, settings);
         project.getTasks().getByName("processResources").dependsOn(tomlTask);
 
+        GradleExpander.addConfig(project, settings);
 
         project.afterEvaluate(p -> { //Must run BEFORE ForgeGradle!
-            GradleExpander.addConfig(project, settings);
             GradleExpander.addMaven(project, settings);
             validateExtension(settings);
             GradleExpander.configureMinecraft(project, settings);
