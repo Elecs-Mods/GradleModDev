@@ -12,15 +12,11 @@ import nl.elec332.gradle.util.Utils;
 import org.gradle.api.NonNullApi;
 import org.gradle.api.Plugin;
 import org.gradle.api.Project;
-import org.gradle.api.artifacts.Configuration;
 import org.gradle.api.artifacts.Dependency;
-import org.gradle.api.internal.artifacts.dependencies.DefaultExternalModuleDependency;
+import org.gradle.api.artifacts.ProjectDependency;
 import org.gradle.api.plugins.JavaPlugin;
-import org.gradle.internal.classloader.VisitableURLClassLoader;
 
 import java.io.File;
-import java.lang.reflect.Method;
-import java.net.*;
 
 /**
  * Created by Elec332 on 1-7-2020
@@ -35,7 +31,7 @@ public class ModDevPlugin implements Plugin<Project> {
 
     @Override
     public void apply(Project project) {
-        PluginHelper.checkMinimumGradleVersion("4.9");
+        PluginHelper.checkMinimumGradleVersion("4.10.3");
 
         ForgeHelper.addForgeGradleClasspath(project);
 
@@ -52,7 +48,7 @@ public class ModDevPlugin implements Plugin<Project> {
 
         project.afterEvaluate(p -> { //Must run BEFORE ForgeGradle!
             GradleExpander.addMaven(project, settings);
-            validateExtension(settings);
+            validateExtension(project, settings);
             GradleExpander.configureMinecraft(project, settings);
             GradleExpander.configureResources(project, settings);
             GradleExpander.addDeobf(project, settings);
@@ -61,7 +57,7 @@ public class ModDevPlugin implements Plugin<Project> {
             if (settings.fgTweaks) {
                 ForgeHelper.addProjectMods(project, ProjectHelper.getCompileConfiguration(project));
             }
-
+            ForgeHelper.fixWailaRepo(project);
         });
 
         DependencyHandler.handleConfigurations(project); //Must run BEFORE ForgeGradle!
@@ -79,15 +75,35 @@ public class ModDevPlugin implements Plugin<Project> {
         return project.file("src/generated/resources");
     }
 
-    private void validateExtension(ModDevExtension extension) {
+    private void validateExtension(Project project, ModDevExtension extension) {
         if (Utils.isNullOrEmpty(extension.modName)) {
             throw new IllegalArgumentException("No mod name entered!");
         }
         if (Utils.isNullOrEmpty(extension.modId)) {
             throw new IllegalArgumentException("No mod id entered!");
         }
+        String basePackage = project.getGroup().toString();
+        if (Utils.isNullOrEmpty(basePackage)) {
+            basePackage = null;
+        } else {
+            String defBase = project.getRootProject().getName();
+            if (project.getParent() != project.getRootProject() && project.getParent() != null) {
+                defBase += "." + project.getParent().getPath().substring(1).replace(':', '.');
+            }
+            if (basePackage.equals(defBase)) {
+                basePackage = null;
+            }
+        }
+
         if (Utils.isNullOrEmpty(extension.basePackage)) {
-            throw new IllegalArgumentException("No base package (for manifest version info) entered!");
+            if (Utils.isNullOrEmpty(basePackage)) {
+                throw new IllegalArgumentException("No base package (for manifest version info) entered!");
+            } else {
+                extension.basePackage = basePackage;
+            }
+        } else if (Utils.isNullOrEmpty(basePackage)) {
+            project.setGroup(extension.basePackage);
+            System.out.println("Setting project group to: " + extension.basePackage);
         }
         if (Utils.isNullOrEmpty(extension.modVersion)) {
             throw new IllegalArgumentException("No mod version entered!");

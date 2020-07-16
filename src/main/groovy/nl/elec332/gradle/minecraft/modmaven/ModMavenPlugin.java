@@ -1,7 +1,7 @@
 package nl.elec332.gradle.minecraft.modmaven;
 
-import nl.elec332.gradle.minecraft.moddev.tasks.GenerateTomlTask;
 import nl.elec332.gradle.minecraft.moddev.ModDevPlugin;
+import nl.elec332.gradle.minecraft.moddev.tasks.GenerateTomlTask;
 import nl.elec332.gradle.util.GroovyHooks;
 import nl.elec332.gradle.util.PluginHelper;
 import nl.elec332.gradle.util.maven.MavenHelper;

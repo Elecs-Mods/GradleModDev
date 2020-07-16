@@ -1,7 +1,7 @@
 package nl.elec332.gradle.minecraft.moddev.stages;
 
-import nl.elec332.gradle.minecraft.moddev.util.ForgeHelper;
 import nl.elec332.gradle.minecraft.moddev.ModDevPlugin;
+import nl.elec332.gradle.minecraft.moddev.util.ForgeHelper;
 import nl.elec332.gradle.util.JavaPluginHelper;
 import nl.elec332.gradle.util.ProjectHelper;
 import org.gradle.api.Project;
@@ -9,10 +9,13 @@ import org.gradle.api.artifacts.Configuration;
 import org.gradle.api.artifacts.Dependency;
 import org.gradle.api.artifacts.ProjectDependency;
 import org.gradle.api.artifacts.repositories.ArtifactRepository;
-import org.gradle.api.artifacts.repositories.MavenArtifactRepository;
-import org.gradle.api.internal.artifacts.repositories.DefaultMavenArtifactRepository;
 import org.gradle.api.tasks.compile.JavaCompile;
 
+import java.io.File;
+import java.net.URI;
+import java.net.URL;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.*;
 import java.util.function.Function;
 
@@ -86,12 +89,23 @@ public class DuplicateForgeFixer {
                 System.out.println("Re-ordering repositories");
                 for (Project proj : tbc.keySet()) {
                     Collection<ArtifactRepository> reps = new ArrayList<>(proj.getRepositories());
+                    ArtifactRepository nr = null;
                     if (proj == project) {
                         reps.removeIf(r -> r.getName().contains("BUNDELED"));
+                        try {
+                            File file = Paths.get(project.getGradle().getGradleUserHomeDir().getPath(), "caches", "forge_gradle", "deobf_dependencies").toFile();
+                            URL url = file.toURI().toURL();
+                            nr = proj.getRepositories().maven(r -> r.setUrl(url));
+                        } catch (Exception e) {
+                            throw new RuntimeException(e);
+                        }
                     }
                     proj.getRepositories().clear();
                     proj.getRepositories().add(repo);
                     proj.getRepositories().addAll(reps);
+                    if (nr != null) {
+                        proj.getRepositories().add(nr);
+                    }
                     ForgeHelper.fixWailaRepo(proj);
                 }
             }

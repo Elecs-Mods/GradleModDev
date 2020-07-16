@@ -20,7 +20,7 @@ class ForgeHelper {
     static void fixWailaRepo(Project project) {
         Collection<ArtifactRepository> reps = new ArrayList<>(project.getRepositories())
         project.getRepositories().clear()
-        Collection<ArtifactRepository> wailaBs = reps.stream().filter({a -> a instanceof MavenArtifactRepository}).filter({a ->
+        Collection<ArtifactRepository> wailaBs = reps.stream().filter({ a -> a instanceof MavenArtifactRepository }).filter({ a ->
             String s = ((MavenArtifactRepository) a).getUrl().toString();
             return s != null && s.contains("tehnut.info");
         }).collect(Collectors.toList())
@@ -153,7 +153,7 @@ class ForgeHelper {
 
     private static void addURLs(ClassLoader cl, URL url) {
         if (cl instanceof URLClassLoader) {
-            URLClassLoader ul = (URLClassLoader)cl;
+            URLClassLoader ul = (URLClassLoader) cl;
             try {
                 Method method = URLClassLoader.class.getDeclaredMethod("addURL", URL.class);
                 method.setAccessible(true);

@@ -110,7 +110,7 @@ class GradleExpander {
         project.dependencies {
             minecraft 'net.minecraftforge:forge:' + extension.minecraftVersion + "-" + extension.forgeVersion
         }
-        println "Comfigured minecraft{} block"
+        println "Configured minecraft{} block"
     }
 
     static void configureResources(Project project, ModDevExtension extension) {
@@ -127,8 +127,12 @@ class GradleExpander {
         String classifier = extension.modClassifier
         classifier = Utils.isNullOrEmpty(classifier) ? "" : "-" + classifier
 
-        project.version = temp + (localBuild ? ".9999.custom" : build)
-        extension.modVersion = extension.minecraftVersion + "-" + temp + (localBuild ? ".localBuild" : build) + classifier
+        String projVersion = temp + (localBuild ? ".localBuild" : build) + classifier
+        if (extension.includeMinecraftVersion) {
+            projVersion = extension.minecraftVersion + "-" + projVersion;
+        }
+        project.version = projVersion
+        extension.modVersion = temp + (localBuild ? ".9999.custom" : build)
 
         project.archivesBaseName = extension.modName
 
@@ -169,7 +173,7 @@ class GradleExpander {
             }
         }
 
-        println "Added Manifest info"
+        println "Added Manifest info for package: " + extension.basePackage
     }
 
     static void addDeobf(Project project, ModDevExtension extension) {

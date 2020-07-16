@@ -5,15 +5,23 @@ package nl.elec332.gradle.minecraft.moddev;
  */
 public class ModDevExtension {
 
+    // Required mod info
+
     public String modName = null;
 
     public String modId = null;
 
     public String basePackage = null;
 
+    //Options
+
     public boolean fgTweaks = false;
 
+    public boolean includeMinecraftVersion = true;
+
     public boolean localBuildIdentifier = true;
+
+    public boolean jenkinsBuildNumber = true;
 
     public boolean createDeobf = false;
 
@@ -21,11 +29,11 @@ public class ModDevExtension {
 
     public boolean createPackMeta = true;
 
-    public boolean jenkinsBuildNumber = true;
-
     public boolean addModMaven = true;
 
     public boolean addWailaMaven = false;
+
+    //Config options
 
     public String modVersion = null;
 
