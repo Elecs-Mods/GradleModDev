@@ -12,9 +12,7 @@ import org.gradle.api.artifacts.repositories.ArtifactRepository;
 import org.gradle.api.tasks.compile.JavaCompile;
 
 import java.io.File;
-import java.net.URI;
 import java.net.URL;
-import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
 import java.util.function.Function;
@@ -27,11 +25,11 @@ public class DuplicateForgeFixer {
     public static void fixDuplicateForgeVersions(Project project) {
         project.getGradle().projectsEvaluated(g -> {
             if (!ModDevPlugin.getExtension(project).fgTweaks) {
-                System.out.println("Skipping FG tweaks");
+                System.out.println("Skipping FG tweaks for project " + project.getName());
                 return;
             }
 
-            System.out.println("Processing Forge versions");
+            System.out.println("Processing Forge versions for project " + project.getName());
 
             Function<Project, ArtifactRepository> repoGetter = p -> p.getRepositories().stream().filter(r -> r.getName().contains("BUNDELED")).reduce((a, b) -> null).orElseThrow(RuntimeException::new);
 

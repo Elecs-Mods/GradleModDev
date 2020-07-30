@@ -178,10 +178,12 @@ class GradleExpander {
 
     static void addDeobf(Project project, ModDevExtension extension) {
         if (extension.createDeobf) {
-            project.task deobfJar(type: Jar) { // Generate deobfuscated
-                from sourceSets.main.output
+            
+            project.task("deobfJar", type: Jar, { // Generate deobfuscated
+                from project.sourceSets.main.output
                 classifier = 'deobf'
-            }
+            })
+            
             project.tasks.build.dependsOn('deobfJar')
             println "Added Deobf task"
         }

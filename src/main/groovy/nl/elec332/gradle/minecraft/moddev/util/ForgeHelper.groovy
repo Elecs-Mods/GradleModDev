@@ -1,5 +1,6 @@
 package nl.elec332.gradle.minecraft.moddev.util
 
+import nl.elec332.gradle.minecraft.moddev.ModDevPlugin
 import org.gradle.api.Project
 import org.gradle.api.artifacts.Configuration
 import org.gradle.api.artifacts.Dependency
@@ -8,7 +9,6 @@ import org.gradle.api.artifacts.ProjectDependency
 import org.gradle.api.artifacts.repositories.ArtifactRepository
 import org.gradle.api.artifacts.repositories.MavenArtifactRepository
 
-import java.lang.reflect.Field
 import java.lang.reflect.Method
 import java.util.stream.Collectors
 
@@ -56,12 +56,13 @@ class ForgeHelper {
 
     static Dependency deobfDep(Project project, Dependency dependency) {
         if (dependency instanceof ExternalModuleDependency) {
-            dependency.transitive = true
-            Field f = Class.forName("net.minecraftforge.gradle.userdev.DependencyManagementExtension").getDeclaredField("remapper")
-            f.setAccessible(true)
-            project.getConfigurations().getByName("__obfuscated").getDependencies().add(dependency)
-            ExternalModuleDependency ret = f.get(project.fg).remapExternalModule(dependency)
-            return ret
+            return project.fg.deobf(dependency)
+//            dependency.transitive = true
+//            Field f = Class.forName("net.minecraftforge.gradle.userdev.DependencyManagementExtension").getDeclaredField("remapper")
+//            f.setAccessible(true)
+//            project.getConfigurations().getByName("__obfuscated").getDependencies().add(dependency)
+//            ExternalModuleDependency ret = f.get(project.fg).remapExternalModule(dependency)
+//            return ret
         }
         println "Unable to remap dependency: " + dependency
         return dependency
@@ -121,6 +122,13 @@ class ForgeHelper {
                     }
                 }
             }
+            
+            proj.afterEvaluate {
+                proj.getPlugins().withType(ModDevPlugin.class, {p ->
+                    ModDevPlugin.getExtension(proj).fgTweaks = false
+                })
+            }
+
             return true
         }
         return false;
@@ -133,6 +141,22 @@ class ForgeHelper {
 
     //Force-load FG to the classpath, remove dependency results and apply later
     static void addForgeGradleClasspath(Project project) {
+        //Don't add to classpath twice
+        if (project.rootProject != project) {
+            if (project.rootProject.plugins.hasPlugin("net.minecraftforge.gradle")) {
+                println "Skip apply 1"
+                return
+            }
+            Project check = project
+            while (check.parent != null) {
+                check = check.parent
+                if (check.plugins.hasPlugin("net.minecraftforge.gradle")) {
+                    println "Skip apply 2"
+                    return
+                }
+            }
+        }
+
         String cfg = "fgGradlePlugin"
         Configuration tezt = project.getConfigurations().create(cfg)
         MavenArtifactRepository repo1 = project.repositories.maven {
