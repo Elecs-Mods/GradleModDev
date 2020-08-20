@@ -20,7 +20,7 @@ class MavenHelper {
     static List<String> getDevelopers(Project project) {
         List<String> ret = new ArrayList<>()
         GroovyHooks.configureMaven(project, { maven ->
-            ret.addAll(maven.pom.mavenProject.getDevelopers().stream().map({d -> d.getName()}).collect(Collectors.toList()))
+            ret.addAll(maven.pom.mavenProject.getDevelopers().stream().map({ d -> d.getName() }).collect(Collectors.toList()))
         })
         return ret
     }
@@ -42,7 +42,7 @@ class MavenHelper {
         return Stream.of(
                 System.getProperty("local_maven"), System.getenv("local_maven"),
                 System.getProperty("MAVEN_LOCAL"), System.getenv("MAVEN_LOCAL")
-        ).filter({o -> o != null}).findFirst().orElse(null);
+        ).filter({ o -> o != null }).findFirst().orElse(null);
     }
 
     static void setMavenRepo(MavenDeployer deployer, String repo) {

@@ -5,7 +5,7 @@ plugins {
 }
 
 group 'nl.elec332.gradle.minecraft'
-version '0.2.1-Beta'
+version '0.2.2-Beta'
 
 sourceCompatibility = targetCompatibility = 1.8
 

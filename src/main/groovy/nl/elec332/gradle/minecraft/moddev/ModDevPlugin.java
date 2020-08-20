@@ -55,7 +55,6 @@ public class ModDevPlugin implements Plugin<Project> {
             if (settings.fgTweaks) {
                 ForgeHelper.addProjectMods(project, ProjectHelper.getCompileConfiguration(project));
             }
-            ForgeHelper.fixWailaRepo(project);
         });
 
         DependencyHandler.handleConfigurations(project); //Must run BEFORE ForgeGradle!

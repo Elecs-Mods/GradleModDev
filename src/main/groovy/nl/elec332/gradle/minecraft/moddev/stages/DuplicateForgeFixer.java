@@ -104,7 +104,6 @@ public class DuplicateForgeFixer {
                     if (nr != null) {
                         proj.getRepositories().add(nr);
                     }
-                    ForgeHelper.fixWailaRepo(proj);
                 }
             }
             tbc.values().forEach(cfg -> cfg.getDependencies().addAll(deps));

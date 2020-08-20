@@ -2,8 +2,8 @@ package nl.elec332.gradle.minecraft.moddev.stages
 
 import nl.elec332.gradle.minecraft.moddev.ModDevExtension
 import nl.elec332.gradle.minecraft.moddev.ModDevPlugin
-import nl.elec332.gradle.minecraft.moddev.util.ForgeHelper
 import nl.elec332.gradle.minecraft.moddev.util.TomlExtensions
+import nl.elec332.gradle.util.PluginHelper
 import nl.elec332.gradle.util.Utils
 import org.gradle.api.Project
 import org.gradle.api.tasks.bundling.Jar
@@ -52,14 +52,17 @@ class GradleExpander {
                 println "Added ModMaven repo"
             }
             if (extension.addWailaMaven) {
-                maven { //WAILA, notoriously unreliable (Can cause other deps to fail due to timeouts)
-                    name "Waila"
-                    url "http://maven.tehnut.info"
+                PluginHelper.checkMinimumGradleVersion("5.1")
+                project.repositories {
+                    maven { //WAILA, notoriously unreliable (Can cause other deps to fail due to timeouts)
+                        name "Waila"
+                        url "http://maven.tehnut.info"
+                        content {
+                            includeGroup "mcp.mobius.waila"
+                        }
+                    }
+                    println "Added Waila repo"
                 }
-                project.afterEvaluate {
-                    ForgeHelper.fixWailaRepo(project)
-                }
-                println "Added Waila repo"
             }
         }
     }
@@ -178,12 +181,12 @@ class GradleExpander {
 
     static void addDeobf(Project project, ModDevExtension extension) {
         if (extension.createDeobf) {
-            
+
             project.task("deobfJar", type: Jar, { // Generate deobfuscated
                 from project.sourceSets.main.output
                 classifier = 'deobf'
             })
-            
+
             project.tasks.build.dependsOn('deobfJar')
             println "Added Deobf task"
         }

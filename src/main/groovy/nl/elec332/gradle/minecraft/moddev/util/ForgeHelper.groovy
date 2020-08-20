@@ -6,28 +6,14 @@ import org.gradle.api.artifacts.Configuration
 import org.gradle.api.artifacts.Dependency
 import org.gradle.api.artifacts.ExternalModuleDependency
 import org.gradle.api.artifacts.ProjectDependency
-import org.gradle.api.artifacts.repositories.ArtifactRepository
 import org.gradle.api.artifacts.repositories.MavenArtifactRepository
 
 import java.lang.reflect.Method
-import java.util.stream.Collectors
 
 /**
  * Created by Elec332 on 4-7-2020
  */
 class ForgeHelper {
-
-    static void fixWailaRepo(Project project) {
-        Collection<ArtifactRepository> reps = new ArrayList<>(project.getRepositories())
-        project.getRepositories().clear()
-        Collection<ArtifactRepository> wailaBs = reps.stream().filter({ a -> a instanceof MavenArtifactRepository }).filter({ a ->
-            String s = ((MavenArtifactRepository) a).getUrl().toString();
-            return s != null && s.contains("tehnut.info");
-        }).collect(Collectors.toList())
-        reps.removeAll(wailaBs)
-        project.getRepositories().addAll(reps)
-        project.getRepositories().addAll(wailaBs) //Make sure Waila repo is last, as it causes timeouts on unrelated dependencies
-    }
 
     static Configuration getMcConfiguration(Project project) {
         return project.getConfigurations().findByName("minecraft")
@@ -122,9 +108,9 @@ class ForgeHelper {
                     }
                 }
             }
-            
+
             proj.afterEvaluate {
-                proj.getPlugins().withType(ModDevPlugin.class, {p ->
+                proj.getPlugins().withType(ModDevPlugin.class, { p ->
                     ModDevPlugin.getExtension(proj).fgTweaks = false
                 })
             }
