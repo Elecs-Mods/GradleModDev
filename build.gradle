@@ -1,0 +1,43 @@
+plugins {
+    id "java-gradle-plugin"
+    id "groovy"
+    id "com.github.johnrengelman.shadow" version "8.1.1"
+    id "com.gradle.plugin-publish" version "1.2.1"
+}
+
+group "nl.elec332.gradle.minecraft"
+version "1.0.A1"
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    shadow("com.moandjiezana.toml:toml4j:0.7.2") {
+        transitive = false
+    }
+}
+
+shadowJar {
+    enableRelocation true
+    configurations = [project.configurations.shadow]
+    archiveFileName = jar.archiveFileName.get()
+    archiveClassifier = ""
+}
+
+tasks.jar.dependsOn(shadowJar)
+tasks.jar.onlyIf {false}
+
+gradlePlugin {
+    website = "https://github.com/Elecs-Mods/GradleModDev"
+    vcsUrl = "https://github.com/Elecs-Mods/GradleModDev.git"
+    plugins {
+        settings {
+            id = "nl.elec332.gradle.minecraft.moddev"
+            implementationClass = "nl.elec332.gradle.minecraft.moddev.SettingsPlugin"
+            displayName = "Gradle Minecraft Mod Development Plugin"
+            description = "A Gradle plugin to simplify development of (multi-loader) Minecraft Mods"
+            tags.addAll("java", "mod", "minecraft", "forge" ,"fabric", "quilt", "neo", "neoforge")
+        }
+    }
+}
