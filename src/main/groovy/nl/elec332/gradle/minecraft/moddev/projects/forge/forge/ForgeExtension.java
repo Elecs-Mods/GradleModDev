@@ -1,5 +1,6 @@
 package nl.elec332.gradle.minecraft.moddev.projects.forge.forge;
 
+import nl.elec332.gradle.minecraft.moddev.SettingsPlugin;
 import nl.elec332.gradle.minecraft.moddev.projects.forge.ForgeBasedExtension;
 
 /**
@@ -12,5 +13,7 @@ public class ForgeExtension extends ForgeBasedExtension {
     }
 
     public boolean copyIdeResources = true;
+
+    public boolean addMixinsToManifest = !SettingsPlugin.isSuperCommonMode(getProject());
 
 }

@@ -59,10 +59,16 @@ class ModMetadataImpl implements ModMetadata, Serializable {
                 dep["mandatory"] = false
             }
             deps.addAll(otherDeps)
-            merge(data, ["mixins": other.data["mixins"]])
+            if (other.data.containsKey(other.mixinEntry())) {
+                merge(data, Map.of(other.mixinEntry(), other.data[other.mixinEntry()]))
+            }
         } else {
             throw new UnsupportedOperationException()
         }
+    }
+
+    String mixinEntry() {
+        return loader == ModLoader.FORGE ? "forgemixins" : "mixins"
     }
 
     @Override
@@ -115,7 +121,7 @@ class ModMetadataImpl implements ModMetadata, Serializable {
 
     @Override
     void mixin(String s) {
-        merge(data, ["mixins": [s]])
+        merge(data, Map.of(mixinEntry(), [s]))
     }
 
     @Override
@@ -369,7 +375,7 @@ class ModMetadataImpl implements ModMetadata, Serializable {
 
     @Override
     Set<String> getMixins() {
-        Object data = this.data["mixins"]
+        Object data = this.data[mixinEntry()]
         if (data == null) {
             return null
         }
@@ -396,8 +402,8 @@ class ModMetadataImpl implements ModMetadata, Serializable {
                 map2 = new HashMap()
                 map2["schema_version"] = 1
                 map2["quilt_loader"] = map
-                if (map.containsKey("mixins")) {
-                    Collection mixins = map.remove("mixins") as Collection
+                if (map.containsKey(mixinEntry())) {
+                    Collection mixins = map.remove(mixinEntry()) as Collection
                     map2["mixin"] = mixins
                 }
                 map["intermediate_mappings"] = "net.fabricmc:intermediary"
@@ -408,15 +414,15 @@ class ModMetadataImpl implements ModMetadata, Serializable {
                 if (!map.containsKey("modLoader")) {
                     map["modLoader"] = "javafml"
                 }
-                Collection mixins = map.remove("mixins") as Collection
-                Set<String> types = new HashSet<>();
-                types.add(this.loader == ModLoader.NEO_FORGE ? "mixins" : "forgemixins")
-                altLoaders.forEach {l -> types.add(l == ModLoader.NEO_FORGE ? "mixins" : "forgemixins")}
-                if (mixins != null && !mixins.empty) {
-                    Set mm = new HashSet();
-                    types.forEach {map.put(it, mm)}
-                    for (s in mixins) {
-                        mm.add(["config": s])
+
+                for (mixName in ["mixins", "forgemixins"]) {
+                    Collection mixins = map.remove(mixName) as Collection
+                    if (mixins != null && !mixins.empty) {
+                        Set mm = new HashSet();
+                        map.put(mixName, mm)
+                        for (s in mixins) {
+                            mm.add(["config": s])
+                        }
                     }
                 }
                 break

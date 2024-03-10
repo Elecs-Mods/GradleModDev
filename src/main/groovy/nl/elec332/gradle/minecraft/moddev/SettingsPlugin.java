@@ -29,6 +29,8 @@ public class SettingsPlugin implements Plugin<Settings> {
 
         public boolean superCommonMode = false;
 
+        public boolean multiProject = true;
+
         private final Set<ModLoader> loaders = new HashSet<>();
 
         public void enableForge() {
@@ -142,9 +144,9 @@ public class SettingsPlugin implements Plugin<Settings> {
             if (cfg.superCommonMode) {
                 cfg.rootIsCommon = true;
             }
-            if (cfg.loaders.size() == 1) {
+            if (cfg.loaders.size() == 1 && !cfg.multiProject) {
                 singleProject[0] = true;
-            } else if (cfg.loaders.size() > 1) {
+            } else if (!cfg.loaders.isEmpty()) {
                 if (!cfg.rootIsCommon) {
                     s.include(ModLoader.COMMON_PROJECT_NAME);
                 }
@@ -164,6 +166,7 @@ public class SettingsPlugin implements Plugin<Settings> {
             mdd.superCommonMode = cfg.superCommonMode;
         });
 
+        settings.getRootProject().setName((String) Objects.requireNonNull(settings.getExtensions().getExtraProperties().get(MLProperties.MOD_NAME)));
     }
 
     public static void addRepositories(RepositoryHandler h) {

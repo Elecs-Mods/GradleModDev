@@ -64,7 +64,7 @@ public class ForgeProjectPlugin extends ForgeBasedPlugin<ForgeExtension> {
 
     @Override
     protected void checkModMetadata(Project project, ModMetadata metadata) {
-        if (metadata.getMixins() != null && !SettingsPlugin.isSuperCommonMode(project)) {
+        if (metadata.getMixins() != null && getExtension(project).addMixinsToManifest) {
             project.getTasks().withType(Jar.class, jar -> {
                 jar.manifest(manifest -> manifest.attributes(Map.of(
                         "MixinConfigs", String.join(",", metadata.getMixins())

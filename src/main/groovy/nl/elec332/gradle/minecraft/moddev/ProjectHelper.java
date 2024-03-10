@@ -141,6 +141,13 @@ public class ProjectHelper {
 
         private String modify(String original) {
             String allPlugins = plugins.stream().map(s -> "plugins{" + s + "}").collect(Collectors.joining("\n"));
+            //Temporary fix to allow for buildscript{} blocks
+            if (original.contains("plugins {")) {
+                return original.replaceFirst("plugins \\{", allPlugins + "\n plugins {");
+            }
+            if (original.contains("plugins{")) {
+                return original.replaceFirst("plugins\\{", allPlugins + "\n plugins {");
+            }
             return allPlugins + "\n" + original;
         }
 

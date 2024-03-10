@@ -6,7 +6,7 @@ plugins {
 }
 
 group "nl.elec332.gradle.minecraft"
-version "1.0.A1"
+version "1.0.A2"
 
 repositories {
     mavenCentral()
@@ -16,6 +16,10 @@ dependencies {
     shadow("com.moandjiezana.toml:toml4j:0.7.2") {
         transitive = false
     }
+}
+
+javadoc {
+    options.addStringOption("Xdoclint:none", "-quiet")
 }
 
 shadowJar {
