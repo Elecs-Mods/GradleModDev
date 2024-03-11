@@ -3,12 +3,10 @@ package nl.elec332.gradle.minecraft.moddev.projects.forge.forge;
 import nl.elec332.gradle.minecraft.moddev.MLProperties;
 import nl.elec332.gradle.minecraft.moddev.ModLoader;
 import nl.elec332.gradle.minecraft.moddev.ProjectHelper;
-import nl.elec332.gradle.minecraft.moddev.SettingsPlugin;
 import nl.elec332.gradle.minecraft.moddev.projects.ModMetadata;
 import nl.elec332.gradle.minecraft.moddev.projects.forge.ForgeBasedPlugin;
 import org.gradle.api.Project;
 import org.gradle.api.initialization.Settings;
-import org.gradle.api.plugins.JavaPlugin;
 import org.gradle.api.publish.maven.tasks.AbstractPublishToMaven;
 import org.gradle.jvm.tasks.Jar;
 
@@ -23,6 +21,8 @@ public class ForgeProjectPlugin extends ForgeBasedPlugin<ForgeExtension> {
     public ForgeProjectPlugin() {
         super(ModLoader.FORGE);
     }
+
+    public static final String REMAP_JAR_TASK = "reobfJar";
 
     @Override
     protected String getArchiveAppendix() {
@@ -43,8 +43,7 @@ public class ForgeProjectPlugin extends ForgeBasedPlugin<ForgeExtension> {
         ForgeGroovyHelper.setRunSettings(project, getExtension(project));
         ForgeGroovyHelper.setMinecraftSettings(project, getExtension(project));
         ForgeGroovyHelper.setDependencies(project);
-        project.getTasks().getByName(JavaPlugin.JAR_TASK_NAME).finalizedBy("reobfJar");
-        project.getTasks().withType(AbstractPublishToMaven.class, m -> m.dependsOn("reobfJar"));
+        project.getTasks().withType(AbstractPublishToMaven.class, m -> m.dependsOn(REMAP_JAR_TASK));
     }
 
     @Override

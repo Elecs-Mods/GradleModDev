@@ -2,14 +2,15 @@ package nl.elec332.gradle.minecraft.moddev.projects;
 
 import nl.elec332.gradle.minecraft.moddev.MLProperties;
 import nl.elec332.gradle.minecraft.moddev.ProjectHelper;
+import org.gradle.api.Action;
 import org.gradle.api.Plugin;
 import org.gradle.api.Project;
 import org.gradle.api.plugins.JavaPlugin;
 import org.gradle.api.plugins.JavaPluginExtension;
 import org.gradle.api.publish.PublishingExtension;
+import org.gradle.api.publish.maven.MavenArtifact;
 import org.gradle.api.publish.maven.MavenPublication;
 import org.gradle.api.tasks.SourceSet;
-import org.gradle.api.tasks.bundling.AbstractArchiveTask;
 
 import java.util.Objects;
 import java.util.Set;
@@ -36,13 +37,20 @@ public abstract class AbstractPluginSC implements Plugin<Project> {
     protected abstract void applyPlugin(Project target, SourceSet main);
 
     protected static final String COMMON_CONFIG_NAME = "commonImplementation";
-    protected static final String JAR_TASK_NAME = "jar";
     protected static final String DEV_JAR_TASK_NAME = "devJar";
-    protected static final String DEV_ALL_JAR_TASK_NAME = "devJarAll";
+    protected static final String REMAPPED_JAR_TASK_NAME = "remappedJar";
     protected static final String MOD_PUBLICATION = "modPublication";
+    protected static final String MAPPINGS = "Mappings";
 
-    protected static void addToPublication(Project target, AbstractArchiveTask archive) {
-        getModPublication(target).artifact(archive);
+    protected static void addToPublication(Project target, Object archive) {
+        addToPublication(target, archive, null);
+    }
+
+    protected static void addToPublication(Project target, Object archive, Action<? super MavenArtifact> config) {
+        MavenArtifact ma = getModPublication(target).artifact(archive);
+        if (config != null) {
+            config.execute(ma);
+        }
     }
 
     protected static MavenPublication getModPublication(Project target) {

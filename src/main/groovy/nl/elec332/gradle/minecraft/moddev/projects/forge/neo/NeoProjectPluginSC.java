@@ -8,7 +8,11 @@ import nl.elec332.gradle.minecraft.moddev.projects.AbstractPluginMLSC;
 import nl.elec332.gradle.minecraft.moddev.projects.CommonExtension;
 import nl.elec332.gradle.minecraft.moddev.projects.CommonMLExtension;
 import org.gradle.api.Project;
+import org.gradle.api.plugins.JavaPlugin;
 import org.gradle.api.tasks.SourceSet;
+import org.gradle.jvm.tasks.Jar;
+
+import java.util.Map;
 
 /**
  * Created by Elec332 on 23-02-2024
@@ -31,6 +35,7 @@ public class NeoProjectPluginSC extends AbstractPluginMLSC {
                 }
             });
         });
+        target.getRootProject().getTasks().named(JavaPlugin.JAR_TASK_NAME, Jar.class, j -> j.getManifest().attributes(Map.of("FMLModType", "GAMELIBRARY")));
     }
 
 }

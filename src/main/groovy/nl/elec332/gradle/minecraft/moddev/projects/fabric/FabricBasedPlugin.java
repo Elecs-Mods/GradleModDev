@@ -24,7 +24,6 @@ public abstract class FabricBasedPlugin<E extends FabricBasedExtension> extends 
         FabricBasedGroovyHelper.setRefMapName(project);
         var td = project.getTasks().named(REMAP_JAR_TASK, Jar.class, j -> {
             Jar jt = (Jar) project.getTasks().getByName(JavaPlugin.JAR_TASK_NAME);
-            jt.finalizedBy(j);
             j.getArchiveBaseName().set(jt.getArchiveBaseName().getOrNull());
             j.getArchiveAppendix().set(jt.getArchiveAppendix().getOrNull());
             j.getArchiveVersion().set(jt.getArchiveVersion().getOrNull());

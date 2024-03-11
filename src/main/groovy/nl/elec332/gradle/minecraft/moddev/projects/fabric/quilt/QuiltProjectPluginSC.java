@@ -6,23 +6,24 @@ import nl.elec332.gradle.minecraft.moddev.projects.AbstractPluginMLSC;
 import nl.elec332.gradle.minecraft.moddev.projects.CommonExtension;
 import nl.elec332.gradle.minecraft.moddev.projects.fabric.FabricBasedPlugin;
 import org.gradle.api.Project;
+import org.gradle.api.Task;
 import org.gradle.api.tasks.SourceSet;
-import org.gradle.jvm.tasks.Jar;
+import org.gradle.api.tasks.TaskProvider;
 
 /**
  * Created by Elec332 on 23-02-2024
  */
 public class QuiltProjectPluginSC extends AbstractPluginMLSC {
 
-    public QuiltProjectPluginSC() {
-        addJarToMaven = false;
-    }
-
     @Override
     public void applyMLPlugin(Project target, SourceSet main, SourceSet run, SourceSet rootMain) {
         String mlVersion = ">=" + ProjectHelper.getProperty(target, MLProperties.ELECLOADER_VERSION);
         target.beforeEvaluate(p -> p.getExtensions().getByType(CommonExtension.class).metadata(md -> md.dependsOn("elecloader", mlVersion)));
-        target.afterEvaluate(p -> target.getTasks().named(FabricBasedPlugin.REMAP_JAR_TASK, Jar.class, j -> addToPublication(target.getRootProject(), j)));
+    }
+
+    @Override
+    protected TaskProvider<? extends Task> setupRemapTask(Project project, Task task) {
+        return project.getTasks().named(FabricBasedPlugin.REMAP_JAR_TASK);
     }
 
 }

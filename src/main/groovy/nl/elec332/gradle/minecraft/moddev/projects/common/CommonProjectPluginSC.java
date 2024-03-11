@@ -1,6 +1,7 @@
 package nl.elec332.gradle.minecraft.moddev.projects.common;
 
 import nl.elec332.gradle.minecraft.moddev.MLProperties;
+import nl.elec332.gradle.minecraft.moddev.ModLoader;
 import nl.elec332.gradle.minecraft.moddev.ProjectHelper;
 import nl.elec332.gradle.minecraft.moddev.projects.AbstractPluginSC;
 import org.gradle.api.Project;
@@ -37,18 +38,18 @@ public final class CommonProjectPluginSC extends AbstractPluginSC {
 
         importProperties(target);
 
-        target.getTasks().named(JAR_TASK_NAME, Jar.class).configure(j -> {
-            j.dependsOn(DEV_JAR_TASK_NAME);
+        target.getTasks().named(JavaPlugin.JAR_TASK_NAME, Jar.class).configure(j -> {
             j.getArchiveClassifier().set("common-dev");
-            j.getManifest().attributes(Map.of("FMLModType", "GAMELIBRARY"));
+            j.getManifest().attributes(Map.of(MAPPINGS, ModLoader.Mapping.NAMED, "Implementation-Title", "common"));
         });
         target.getTasks().named("sourcesJar", Jar.class, j -> j.filesMatching("/META-INF/mods.toml", c -> c.setDuplicatesStrategy(DuplicatesStrategy.EXCLUDE)));
         var devTask = target.getTasks().register(DEV_JAR_TASK_NAME, Jar.class, j -> {
             j.getArchiveClassifier().set("dev");
             j.from(main.getOutput());
-            addToPublication(target, j);
             j.filesMatching("/META-INF/mods.toml", c -> c.setDuplicatesStrategy(DuplicatesStrategy.EXCLUDE));
+            j.getManifest().attributes(Map.of(MAPPINGS, ModLoader.Mapping.NAMED, "Implementation-Title", "all"));
         });
+        addToPublication(target, devTask);
         target.getArtifacts().add("archives", devTask);
         getModPublication(target).from(target.getComponents().getByName(JvmConstants.JAVA_MAIN_COMPONENT_NAME));
     }

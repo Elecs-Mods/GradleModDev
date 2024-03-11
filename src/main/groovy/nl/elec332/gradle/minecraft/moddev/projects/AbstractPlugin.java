@@ -22,6 +22,7 @@ import org.jetbrains.annotations.NotNull;
 import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.function.Consumer;
+import java.util.stream.Collectors;
 
 /**
  * Created by Elec332 on 02-09-2023
@@ -99,7 +100,7 @@ public abstract class AbstractPlugin<E extends CommonExtension> implements Plugi
                         "Implementation-Version", jar.getArchiveVersion(),
                         "Implementation-Vendor", ProjectHelper.getStringProperty(p, MLProperties.MOD_AUTHORS),
                         "Implementation-Timestamp", new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssZ").format(new Date())
-                )));
+                ).entrySet().stream().filter(e -> !manifest.getAttributes().containsKey(e.getKey())).collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue))));
             });
 
             p.getTasks().withType(ProcessResources.class).configureEach(pr -> {

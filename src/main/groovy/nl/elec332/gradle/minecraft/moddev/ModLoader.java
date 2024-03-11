@@ -17,17 +17,19 @@ import org.gradle.api.Project;
  */
 public enum ModLoader {
 
-    FORGE("forge", ModLoaderType.FORGE, ForgeProjectPlugin.class, ForgeProjectPluginSC.class), NEO_FORGE("neo", ModLoaderType.FORGE, NeoProjectPlugin.class, NeoProjectPluginSC.class), FABRIC("fabric", ModLoaderType.FABRIC, FabricProjectPlugin.class, FabricProjectPluginSC.class), QUILT("quilt", ModLoaderType.FABRIC, QuiltProjectPlugin.class, QuiltProjectPluginSC.class);
+    FORGE("forge", ModLoaderType.FORGE, Mapping.FORGE_SRG, ForgeProjectPlugin.class, ForgeProjectPluginSC.class), NEO_FORGE("neo", ModLoaderType.FORGE, Mapping.NAMED, NeoProjectPlugin.class, NeoProjectPluginSC.class), FABRIC("fabric", ModLoaderType.FABRIC, Mapping.FABRIC_INTERMEDIARY, FabricProjectPlugin.class, FabricProjectPluginSC.class), QUILT("quilt", ModLoaderType.FABRIC, Mapping.FABRIC_INTERMEDIARY, QuiltProjectPlugin.class, QuiltProjectPluginSC.class);
 
-    ModLoader(String name, ModLoaderType type, Class<? extends AbstractPlugin<?>> plugin, Class<? extends AbstractPluginSC> pluginSC) {
+    ModLoader(String name, ModLoaderType type, Mapping mapping, Class<? extends AbstractPlugin<?>> plugin, Class<? extends AbstractPluginSC> pluginSC) {
         this.name = name;
         this.type = type;
+        this.mapping = mapping;
         this.plugin = plugin;
         this.pluginSC = pluginSC;
     }
 
     private final String name;
     private final ModLoaderType type;
+    private final Mapping mapping;
     private final Class<? extends AbstractPlugin<?>> plugin;
     private final Class<? extends AbstractPluginSC> pluginSC;
 
@@ -46,6 +48,10 @@ public enum ModLoader {
 
     public ModLoaderType getType() {
         return type;
+    }
+
+    public Mapping getMapping() {
+        return mapping;
     }
 
     public boolean isType(Project project) {
@@ -67,5 +73,11 @@ public enum ModLoader {
     }
 
     public static final String COMMON_PROJECT_NAME = "common";
+
+    public enum Mapping {
+
+        NAMED, FORGE_SRG, FABRIC_INTERMEDIARY
+
+    }
 
 }
