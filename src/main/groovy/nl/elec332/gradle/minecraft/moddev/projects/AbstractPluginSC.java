@@ -2,6 +2,7 @@ package nl.elec332.gradle.minecraft.moddev.projects;
 
 import nl.elec332.gradle.minecraft.moddev.MLProperties;
 import nl.elec332.gradle.minecraft.moddev.ProjectHelper;
+import nl.elec332.gradle.minecraft.moddev.SettingsPlugin;
 import org.gradle.api.Action;
 import org.gradle.api.Plugin;
 import org.gradle.api.Project;
@@ -11,6 +12,7 @@ import org.gradle.api.publish.PublishingExtension;
 import org.gradle.api.publish.maven.MavenArtifact;
 import org.gradle.api.publish.maven.MavenPublication;
 import org.gradle.api.tasks.SourceSet;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Objects;
 import java.util.Set;
@@ -21,17 +23,10 @@ import java.util.Set;
 public abstract class AbstractPluginSC implements Plugin<Project> {
 
     @Override
-    public final void apply(Project target) {
+    public final void apply(@NotNull Project target) {
         ProjectHelper.checkProperties(target, Set.of(MLProperties.ELECLOADER_VERSION));
         target.getRepositories().mavenLocal();
-        if (target.getRootProject() != target) {
-            applyML(target);
-        }
         applyPlugin(target, getSourceSet(target, SourceSet.MAIN_SOURCE_SET_NAME));
-    }
-
-    private void applyML(Project target) {
-        target.getRootProject().afterEvaluate(root -> root.getConfigurations().getByName(COMMON_CONFIG_NAME).getDependencies().forEach(dep -> target.getDependencies().add(JavaPlugin.IMPLEMENTATION_CONFIGURATION_NAME, dep)));
     }
 
     protected abstract void applyPlugin(Project target, SourceSet main);

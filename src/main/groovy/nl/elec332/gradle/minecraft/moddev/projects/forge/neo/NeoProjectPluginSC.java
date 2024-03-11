@@ -20,7 +20,7 @@ import java.util.Map;
 public class NeoProjectPluginSC extends AbstractPluginMLSC {
 
     @Override
-    public void applyMLPlugin(Project target, SourceSet main, SourceSet run, SourceSet rootMain) {
+    public void applyMLPlugin(Project target, SourceSet main, SourceSet run, SourceSet commonMain) {
         String mlVersion = ">=" + ProjectHelper.getProperty(target, MLProperties.ELECLOADER_VERSION);
         if (!ProjectHelper.hasProperty(target, MLProperties.NEO_LOADER_VERSION)) {
             ProjectHelper.setProperty(target, MLProperties.NEO_LOADER_VERSION, mlVersion);
@@ -35,7 +35,7 @@ public class NeoProjectPluginSC extends AbstractPluginMLSC {
                 }
             });
         });
-        target.getRootProject().getTasks().named(JavaPlugin.JAR_TASK_NAME, Jar.class, j -> j.getManifest().attributes(Map.of("FMLModType", "GAMELIBRARY")));
+        SettingsPlugin.getDetails(target).getCommonProject().getTasks().named(JavaPlugin.JAR_TASK_NAME, Jar.class, j -> j.getManifest().attributes(Map.of("FMLModType", "GAMELIBRARY")));
     }
 
 }

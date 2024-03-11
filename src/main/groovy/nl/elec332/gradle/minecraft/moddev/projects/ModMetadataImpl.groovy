@@ -24,13 +24,13 @@ class ModMetadataImpl implements ModMetadata, Serializable {
         this.loader = ProjectHelper.getPlugin(project).getModLoader()
         this.data = new HashMap()
         this.modId_INT = ProjectHelper.getStringProperty(project, MLProperties.MOD_ID)
-        this.altLoaders = new HashSet<>();
+        this.altLoaders = new HashSet<>()
     }
 
     private final ModLoader loader
     private final String modId_INT
     private final Map data
-    private final Set<ModLoader> altLoaders;
+    private final Set<ModLoader> altLoaders
 
     @Override
     void importFrom(ModMetadata other) {
@@ -243,7 +243,7 @@ class ModMetadataImpl implements ModMetadata, Serializable {
     private Map getDependency(String modId, boolean create) {
         Map m = null
         Map iData = data
-        String key = "depends";
+        String key = "depends"
         String id = "id"
         if (loader.getType() == ModLoaderType.FORGE) {
             key = modId_INT
@@ -418,7 +418,7 @@ class ModMetadataImpl implements ModMetadata, Serializable {
                 for (mixName in ["mixins", "forgemixins"]) {
                     Collection mixins = map.remove(mixName) as Collection
                     if (mixins != null && !mixins.empty) {
-                        Set mm = new HashSet();
+                        Set mm = new HashSet()
                         map.put(mixName, mm)
                         for (s in mixins) {
                             mm.add(["config": s])

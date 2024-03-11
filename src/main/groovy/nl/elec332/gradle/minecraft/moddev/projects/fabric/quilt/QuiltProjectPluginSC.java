@@ -16,7 +16,7 @@ import org.gradle.api.tasks.TaskProvider;
 public class QuiltProjectPluginSC extends AbstractPluginMLSC {
 
     @Override
-    public void applyMLPlugin(Project target, SourceSet main, SourceSet run, SourceSet rootMain) {
+    public void applyMLPlugin(Project target, SourceSet main, SourceSet run, SourceSet commonMain) {
         String mlVersion = ">=" + ProjectHelper.getProperty(target, MLProperties.ELECLOADER_VERSION);
         target.beforeEvaluate(p -> p.getExtensions().getByType(CommonExtension.class).metadata(md -> md.dependsOn("elecloader", mlVersion)));
     }

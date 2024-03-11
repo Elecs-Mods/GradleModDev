@@ -22,7 +22,6 @@ import org.gradle.language.jvm.tasks.ProcessResources
 class AbstractGroovyHelper {
 
     public static String GENERATED_RESOURCES = "src/generated/resources"
-//    public static String GENERATED_RESOURCE_FILES = "build/generated/genResources"
     public static String GENERATE_MIXIN_TASK = "generateMixinJson"
     public static String GENERATE_MODINFO_TASK = "generateModInfo"
     public static String CHECK_CLASSES_TASK = "checkClasses"
@@ -142,7 +141,7 @@ class AbstractGroovyHelper {
         }
 
         @Input
-        ModMetadata metadata;
+        ModMetadata metadata
 
         void source(SourceSet ss) {
             this.source = ss.name

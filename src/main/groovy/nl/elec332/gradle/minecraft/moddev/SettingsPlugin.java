@@ -66,6 +66,9 @@ public class SettingsPlugin implements Plugin<Settings> {
 
         @NotNull
         public Project getCommonProject() {
+            if (singleProject()) {
+                throw new UnsupportedOperationException();
+            }
             return Objects.requireNonNull(projects.get(null), "Common project hasn't been initialized yet!");
         }
 
