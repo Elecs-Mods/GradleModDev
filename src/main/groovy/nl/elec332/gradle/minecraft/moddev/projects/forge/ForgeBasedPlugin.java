@@ -1,6 +1,6 @@
 package nl.elec332.gradle.minecraft.moddev.projects.forge;
 
-import nl.elec332.gradle.minecraft.moddev.ModLoader;
+import nl.elec332.gradle.minecraft.moddev.ProjectType;
 import nl.elec332.gradle.minecraft.moddev.projects.AbstractPlugin;
 
 /**
@@ -8,8 +8,8 @@ import nl.elec332.gradle.minecraft.moddev.projects.AbstractPlugin;
  */
 public abstract class ForgeBasedPlugin<E extends ForgeBasedExtension> extends AbstractPlugin<E> {
 
-    public ForgeBasedPlugin(ModLoader modLoader) {
-        super(modLoader);
+    public ForgeBasedPlugin(ProjectType projectType) {
+        super(projectType);
     }
 
 }

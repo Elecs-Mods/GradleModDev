@@ -1,20 +1,24 @@
 package nl.elec332.gradle.minecraft.moddev.projects;
 
-import nl.elec332.gradle.minecraft.moddev.MLProperties;
-import nl.elec332.gradle.minecraft.moddev.ModLoader;
-import nl.elec332.gradle.minecraft.moddev.ProjectHelper;
-import nl.elec332.gradle.minecraft.moddev.SettingsPlugin;
-import nl.elec332.gradle.minecraft.moddev.projects.common.CommonProjectPlugin;
+import nl.elec332.gradle.minecraft.moddev.*;
+import nl.elec332.gradle.minecraft.moddev.tasks.CheckCompileTask;
+import nl.elec332.gradle.minecraft.moddev.tasks.GenerateMixinJson;
+import nl.elec332.gradle.minecraft.moddev.tasks.GenerateModInfo;
 import org.gradle.api.Plugin;
 import org.gradle.api.Project;
+import org.gradle.api.Task;
 import org.gradle.api.initialization.Settings;
 import org.gradle.api.internal.project.ProjectInternal;
 import org.gradle.api.internal.project.ProjectStateInternal;
 import org.gradle.api.plugins.BasePluginExtension;
 import org.gradle.api.plugins.JavaPlugin;
 import org.gradle.api.publish.tasks.GenerateModuleMetadata;
+import org.gradle.api.specs.Spec;
+import org.gradle.api.tasks.SourceSet;
+import org.gradle.api.tasks.TaskContainer;
 import org.gradle.api.tasks.TaskInputs;
 import org.gradle.api.tasks.compile.JavaCompile;
+import org.gradle.api.tasks.javadoc.Javadoc;
 import org.gradle.jvm.tasks.Jar;
 import org.gradle.language.jvm.tasks.ProcessResources;
 import org.jetbrains.annotations.NotNull;
@@ -29,17 +33,22 @@ import java.util.stream.Collectors;
  */
 public abstract class AbstractPlugin<E extends CommonExtension> implements Plugin<Project> {
 
-    protected AbstractPlugin(ModLoader modLoader) {
-        this.modLoader = modLoader;
-        if (modLoader == null && getClass() != CommonProjectPlugin.class) {
+    protected AbstractPlugin(ProjectType projectType) {
+        this.projectType = projectType;
+        if (projectType == null) {
             throw new UnsupportedOperationException();
         }
-        if (modLoader != null && modLoader.getPluginClass() != getClass()) {
+        if (projectType.getPluginClass() != getClass()) {
             throw new IllegalStateException();
         }
     }
 
-    private final ModLoader modLoader;
+    public static String GENERATE_MIXIN_TASK = "generateMixinJson";
+    public static String GENERATE_MODINFO_TASK = "generateModInfo";
+    public static String CHECK_CLASSES_TASK = "checkClasses";
+    public static String GENERATE_METADATA = "generateMetadata";
+
+    private final ProjectType projectType;
 
     @Override
     public final void apply(@NotNull Project target) {
@@ -52,76 +61,73 @@ public abstract class AbstractPlugin<E extends CommonExtension> implements Plugi
         ProjectHelper.checkProperties(target, pluginProps);
         E extension = target.getExtensions().create(extensionType(), "modloader", extensionType());
         preparePlugins(target, settings);
-        boolean isCommon = getModLoader() == null;
-        AbstractGroovyHelper.setProperties(target, true, getModLoader());
-        target.beforeEvaluate(p -> {
-            SettingsPlugin.addRepositories(p.getRepositories());
-            ProjectHelper.checkProperties(p, projectProps);
-            p.setVersion(ProjectHelper.getStringProperty(p, MLProperties.MOD_VERSION));
-            p.setGroup(ProjectHelper.getStringProperty(p, MLProperties.MOD_GROUP_ID));
-            p.getExtensions().configure(BasePluginExtension.class, e -> e.getArchivesName().set(ProjectHelper.getStringProperty(p, MLProperties.MOD_NAME)));
-            p.getTasks().register(AbstractGroovyHelper.CHECK_CLASSES_TASK, CheckCompileTask.class);
-            p.getTasks().register(AbstractGroovyHelper.GENERATE_METADATA).configure(gm -> {
-                p.getTasks().withType(AbstractGroovyHelper.GenerateMixinJson.class).forEach(gm::dependsOn);
-                p.getTasks().withType(AbstractGroovyHelper.GenerateModInfo.class).forEach(gm::dependsOn);
-            });
+        boolean isCommon = getProjectType() == ProjectType.COMMON;
+        AllProjectsPlugin.setProperties(target, true, getProjectType().getModLoader());
 
-            p.getTasks().withType(JavaCompile.class).configureEach(t -> t.dependsOn(AbstractGroovyHelper.GENERATE_METADATA));
-            p.getTasks().withType(Jar.class).configureEach(t -> t.dependsOn(AbstractGroovyHelper.GENERATE_METADATA));
-            p.getTasks().withType(ProcessResources.class).configureEach(t -> t.dependsOn(AbstractGroovyHelper.GENERATE_METADATA));
-
-            if (!isCommon) {
-                p.getTasks().create(AbstractGroovyHelper.GENERATE_MIXIN_TASK, AbstractGroovyHelper.GenerateMixinJson.class);
-                p.getTasks().create(AbstractGroovyHelper.GENERATE_MODINFO_TASK, AbstractGroovyHelper.GenerateModInfo.class).onlyIf(t -> cfg.generateModInfo());
-            } else {
-                extension.metadata(md -> {
-                    String id = ProjectHelper.getStringProperty(p, MLProperties.MOD_ID);
-                    md.mod(id, mi -> {
-                        mi.modVersion(ProjectHelper.getStringProperty(p, MLProperties.MOD_VERSION));
-                        mi.modName(ProjectHelper.getStringProperty(p, MLProperties.MOD_NAME));
-                        mi.setAuthors(List.of(ProjectHelper.getStringProperty(p, MLProperties.MOD_AUTHORS).split(",")));
-                        mi.modDescription(ProjectHelper.getStringProperty(p, MLProperties.MOD_DESCRIPTION));
-                    });
-                    md.modGroupId(ProjectHelper.getStringProperty(p, MLProperties.MOD_GROUP_ID));
-                    md.modLicense(ProjectHelper.getStringProperty(p, MLProperties.MOD_LICENSE));
-                });
-            }
-
-            p.getTasks().withType(AbstractGroovyHelper.GenerateModInfo.class).configureEach(gm -> {
-                p.getTasks().withType(AbstractGroovyHelper.GenerateMixinJson.class).forEach(gm::dependsOn);
-            });
-
-            p.getTasks().withType(Jar.class).configureEach(jar -> {
-                jar.manifest(manifest -> manifest.attributes(Map.of(
-                        "Specification-Title", ProjectHelper.getStringProperty(p, MLProperties.MOD_ID),
-                        "Specification-Vendor", ProjectHelper.getStringProperty(p, MLProperties.MOD_AUTHORS),
-                        "Specification-Version", '1',
-                        "Implementation-Title", p.getName(),
-                        "Implementation-Version", jar.getArchiveVersion(),
-                        "Implementation-Vendor", ProjectHelper.getStringProperty(p, MLProperties.MOD_AUTHORS),
-                        "Implementation-Timestamp", new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssZ").format(new Date())
-                ).entrySet().stream().filter(e -> !manifest.getAttributes().containsKey(e.getKey())).collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue))));
-            });
-
-            p.getTasks().withType(ProcessResources.class).configureEach(pr -> {
-                TaskInputs inputs = pr.getInputs();
-                for (String s : MLProperties.ALL_PROPS) {
-                    if (ProjectHelper.hasProperty(p, s)) {
-                        inputs.property(s, ProjectHelper.getStringProperty(p, s));
-                    }
-                }
-                inputs.property("version", p.getVersion());
-                pr.filesMatching(List.of("/META-INF/mods.toml", "pack.mcmeta", "/fabric.mod.json", "/quilt.mod.json", "/*.txt"), f -> f.expand(inputs.getProperties(), d -> d.getEscapeBackslash().set(true)).filter(s -> s.replace("\\$", "$")));
-            });
+        TaskContainer tasks = target.getTasks();
+        SettingsPlugin.addRepositories(target.getRepositories());
+        ProjectHelper.checkProperties(target, projectProps);
+        target.setVersion(ProjectHelper.getStringProperty(target, MLProperties.MOD_VERSION));
+        target.setGroup(ProjectHelper.getStringProperty(target, MLProperties.MOD_GROUP_ID));
+        target.getExtensions().configure(BasePluginExtension.class, e -> e.getArchivesName().set(ProjectHelper.getStringProperty(target, MLProperties.MOD_NAME)));
+        tasks.register(CHECK_CLASSES_TASK, CheckCompileTask.class);
+        tasks.named(JavaPlugin.CLASSES_TASK_NAME, it -> it.dependsOn(CHECK_CLASSES_TASK));
+        tasks.register(GENERATE_METADATA).configure(gm -> {
+            tasks.withType(GenerateMixinJson.class).forEach(gm::dependsOn);
+            tasks.withType(GenerateModInfo.class).forEach(gm::dependsOn);
         });
-        target.afterEvaluate(p -> {
-            p.getTasks().named(JavaPlugin.CLASSES_TASK_NAME, it -> it.dependsOn(AbstractGroovyHelper.CHECK_CLASSES_TASK));
 
+        tasks.withType(JavaCompile.class).configureEach(t -> t.dependsOn(GENERATE_METADATA));
+        tasks.withType(Jar.class).configureEach(t -> t.dependsOn(GENERATE_METADATA));
+        tasks.withType(ProcessResources.class).configureEach(t -> t.dependsOn(GENERATE_METADATA));
+
+        if (!isCommon) {
+            tasks.create(GENERATE_MIXIN_TASK, GenerateMixinJson.class);
+            tasks.create(GENERATE_MODINFO_TASK, GenerateModInfo.class).onlyIf(t -> cfg.generateModInfo());
+        } else {
+            extension.metadata(md -> {
+                String id = ProjectHelper.getStringProperty(target, MLProperties.MOD_ID);
+                md.mod(id, mi -> {
+                    mi.modVersion(ProjectHelper.getStringProperty(target, MLProperties.MOD_VERSION));
+                    mi.modName(ProjectHelper.getStringProperty(target, MLProperties.MOD_NAME));
+                    mi.setAuthors(List.of(ProjectHelper.getStringProperty(target, MLProperties.MOD_AUTHORS).split(",")));
+                    mi.modDescription(ProjectHelper.getStringProperty(target, MLProperties.MOD_DESCRIPTION));
+                });
+                md.modGroupId(ProjectHelper.getStringProperty(target, MLProperties.MOD_GROUP_ID));
+                md.modLicense(ProjectHelper.getStringProperty(target, MLProperties.MOD_LICENSE));
+            });
+        }
+
+        tasks.withType(GenerateModInfo.class).configureEach(gm -> tasks.withType(GenerateMixinJson.class).forEach(gm::dependsOn));
+
+        tasks.named(JavaPlugin.JAR_TASK_NAME, Jar.class, j -> j.getArchiveClassifier().set(getArchiveClassifier()));
+        tasks.withType(Jar.class).configureEach(jar -> jar.manifest(manifest -> manifest.attributes(Map.of(
+                "Specification-Title", ProjectHelper.getStringProperty(target, MLProperties.MOD_ID),
+                "Specification-Vendor", ProjectHelper.getStringProperty(target, MLProperties.MOD_AUTHORS),
+                "Specification-Version", '1',
+                "Implementation-Title", target.getName(),
+                "Implementation-Version", jar.getArchiveVersion(),
+                "Implementation-Vendor", ProjectHelper.getStringProperty(target, MLProperties.MOD_AUTHORS),
+                "Implementation-Timestamp", new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssZ").format(new Date())
+        ).entrySet().stream().filter(e -> !manifest.getAttributes().containsKey(e.getKey())).collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue)))));
+
+        tasks.withType(ProcessResources.class).configureEach(pr -> {
+            TaskInputs inputs = pr.getInputs();
+            for (String s : MLProperties.ALL_PROPS) {
+                if (ProjectHelper.hasProperty(target, s)) {
+                    inputs.property(s, ProjectHelper.getStringProperty(target, s));
+                }
+            }
+            inputs.property("version", target.getVersion());
+            pr.filesMatching(List.of("/META-INF/mods.toml", "pack.mcmeta", "/fabric.mod.json", "/quilt.mod.json", "/*.txt"), f -> f.expand(inputs.getProperties(), d -> d.getEscapeBackslash().set(true)).filter(s -> s.replace("\\$", "$")));
+        });
+
+        target.afterEvaluate(p -> {
             if (extension.noModuleMetadata) {
                 p.getTasks().withType(GenerateModuleMetadata.class).configureEach(meta -> meta.setEnabled(false));
             }
 
-            p.getTasks().withType(AbstractGroovyHelper.GenerateMixinJson.class).forEach(j -> j.addMixins(extension.getMixins()));
+            p.getTasks().withType(GenerateMixinJson.class).forEach(j -> j.addMixins(extension.getMixins()));
             if (extension instanceof CommonMLExtension) {
                 ModMetadata md;
                 if (!cfg.singleProject()) {
@@ -133,20 +139,20 @@ public abstract class AbstractPlugin<E extends CommonExtension> implements Plugi
                         if (cfg.isSuperCommonMode()) {
                             throw new UnsupportedOperationException("Cannot add CommonDependency to SuperCommon project");
                         }
-                        AbstractGroovyHelper.importCommonProject(p, common, (CommonMLExtension) extension);
+                        importCommonProject(p, common, (CommonMLExtension) extension);
                     }
                     if (((CommonMLExtension) extension).addCommonMixins) {
-                        p.getTasks().withType(AbstractGroovyHelper.GenerateMixinJson.class).forEach(j -> j.addMixins(commonExtension.getMixins()));
+                        p.getTasks().withType(GenerateMixinJson.class).forEach(j -> j.addMixins(commonExtension.getMixins()));
                     }
                 } else {
                     md = ModMetadataImpl.generate(p, extension.getMetaModifiers());
                 }
-                p.getTasks().withType(AbstractGroovyHelper.GenerateMixinJson.class).forEach(j -> j.getMetaMixinFiles().forEach(md::mixin));
+                p.getTasks().withType(GenerateMixinJson.class).forEach(j -> j.getMetaMixinFiles().forEach(md::mixin));
                 if (md.getMixins() != null) {
                     addMixinDependencies(p);
                 }
                 checkModMetadata(p, md);
-                p.getTasks().withType(AbstractGroovyHelper.GenerateModInfo.class).configureEach(pr -> pr.setMetadata(md));
+                p.getTasks().withType(GenerateModInfo.class).configureEach(pr -> pr.getMetaData().set(md));
                 for (Project dp : ((CommonMLExtension) extension).getMetaImports()) {
                     if (dp == null || dp == p) {
                         continue;
@@ -166,11 +172,11 @@ public abstract class AbstractPlugin<E extends CommonExtension> implements Plugi
     }
 
     private void importModMeta(Project from, Project to) {
-        from.getTasks().withType(AbstractGroovyHelper.GenerateModInfo.class).configureEach(pr -> to.getTasks().withType(AbstractGroovyHelper.GenerateModInfo.class).configureEach(pr2 -> pr2.getMetadata().importFrom(pr.getMetadata())));
+        from.getTasks().withType(GenerateModInfo.class).configureEach(pr -> to.getTasks().withType(GenerateModInfo.class).configureEach(pr2 -> pr2.getMetaData().get().importFrom(pr.getMetaData().get())));
     }
 
-    public final ModLoader getModLoader() {
-        return modLoader;
+    public final ProjectType getProjectType() {
+        return this.projectType;
     }
 
     protected final void addPlugin(Project project, String id, String versionProperty) {
@@ -179,7 +185,9 @@ public abstract class AbstractPlugin<E extends CommonExtension> implements Plugi
 
     protected abstract void addMixinDependencies(Project project);
 
-    protected abstract String getArchiveAppendix();
+    protected String getArchiveClassifier() {
+        return projectType.getName();
+    }
 
     protected abstract void preparePlugins(Project project, Settings settings);
 
@@ -196,5 +204,22 @@ public abstract class AbstractPlugin<E extends CommonExtension> implements Plugi
     }
 
     protected abstract Class<E> extensionType();
+
+    private static void importCommonProject(Project root, Project common, CommonMLExtension extension) {
+        root.getDependencies().add(JavaPlugin.COMPILE_ONLY_CONFIGURATION_NAME, common);
+        TaskContainer tasks = root.getTasks();
+        SourceSet commonMain = ProjectHelper.getSourceSets(root).maybeCreate(SourceSet.MAIN_SOURCE_SET_NAME);
+        if (extension.addCommonSourceToAll) {
+            Spec<Task> notNeoTask = t -> !t.getName().startsWith("neo");
+            tasks.withType(JavaCompile.class).matching(notNeoTask).configureEach(c -> c.source(commonMain.getAllSource()));
+            tasks.withType(Javadoc.class).matching(notNeoTask).configureEach(d -> d.source(commonMain.getAllJava()));
+            tasks.withType(ProcessResources.class).matching(notNeoTask).configureEach(r -> r.from(commonMain.getResources()));
+        } else {
+            tasks.named(JavaPlugin.COMPILE_JAVA_TASK_NAME, JavaCompile.class, c -> c.source(commonMain.getAllSource()));
+            tasks.named(JavaPlugin.JAVADOC_TASK_NAME, Javadoc.class, d -> d.source(commonMain.getAllJava()));
+            tasks.named(JavaPlugin.PROCESS_RESOURCES_TASK_NAME, ProcessResources.class, r -> r.from(commonMain.getResources()));
+        }
+        tasks.named("sourcesJar", Jar.class, s -> s.from(commonMain.getAllSource()));
+    }
 
 }

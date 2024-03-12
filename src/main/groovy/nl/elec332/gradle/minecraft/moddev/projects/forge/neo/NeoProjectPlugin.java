@@ -1,12 +1,13 @@
 package nl.elec332.gradle.minecraft.moddev.projects.forge.neo;
 
 import nl.elec332.gradle.minecraft.moddev.MLProperties;
-import nl.elec332.gradle.minecraft.moddev.ModLoader;
 import nl.elec332.gradle.minecraft.moddev.ProjectHelper;
+import nl.elec332.gradle.minecraft.moddev.ProjectType;
 import nl.elec332.gradle.minecraft.moddev.projects.ModMetadata;
 import nl.elec332.gradle.minecraft.moddev.projects.forge.ForgeBasedPlugin;
 import org.gradle.api.Project;
 import org.gradle.api.initialization.Settings;
+import org.gradle.api.plugins.JavaPlugin;
 
 import java.util.function.Consumer;
 
@@ -16,16 +17,11 @@ import java.util.function.Consumer;
 public class NeoProjectPlugin extends ForgeBasedPlugin<NeoExtension> {
 
     public NeoProjectPlugin() {
-        super(ModLoader.NEO_FORGE);
+        super(ProjectType.NEO_FORGE);
     }
 
     @Override
     protected void addMixinDependencies(Project project) {
-    }
-
-    @Override
-    protected String getArchiveAppendix() {
-        return "NeoForge";
     }
 
     @Override
@@ -35,12 +31,12 @@ public class NeoProjectPlugin extends ForgeBasedPlugin<NeoExtension> {
 
     @Override
     protected void beforeProject(Project project) {
+        project.getDependencies().add(JavaPlugin.IMPLEMENTATION_CONFIGURATION_NAME, "net.neoforged:neoforge:" + ProjectHelper.getStringProperty(project, MLProperties.NEO_VERSION));
     }
 
     @Override
     protected void afterProject(Project project) {
         NeoGroovyHelper.setRunSettings(project, getExtension(project));
-        NeoGroovyHelper.setDependencies(project);
         NeoGroovyHelper.setMinecraftSettings(project);
     }
 

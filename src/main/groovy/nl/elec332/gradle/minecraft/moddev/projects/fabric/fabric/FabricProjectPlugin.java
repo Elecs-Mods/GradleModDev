@@ -1,8 +1,8 @@
 package nl.elec332.gradle.minecraft.moddev.projects.fabric.fabric;
 
 import nl.elec332.gradle.minecraft.moddev.MLProperties;
-import nl.elec332.gradle.minecraft.moddev.ModLoader;
 import nl.elec332.gradle.minecraft.moddev.ProjectHelper;
+import nl.elec332.gradle.minecraft.moddev.ProjectType;
 import nl.elec332.gradle.minecraft.moddev.SettingsPlugin;
 import nl.elec332.gradle.minecraft.moddev.projects.ModMetadata;
 import nl.elec332.gradle.minecraft.moddev.projects.fabric.FabricBasedPlugin;
@@ -17,21 +17,12 @@ import java.util.function.Consumer;
 public class FabricProjectPlugin extends FabricBasedPlugin<FabricExtension> {
 
     public FabricProjectPlugin() {
-        super(ModLoader.FABRIC);
-    }
-
-    @Override
-    protected String getArchiveAppendix() {
-        return "Fabric";
+        super(ProjectType.FABRIC);
     }
 
     @Override
     protected void preparePlugins(Project project, Settings settings) {
         addPlugin(project, "fabric-loom", MLProperties.FABRIC_LOOM_VERSION);
-    }
-
-    @Override
-    protected void beforeProject(Project project) {
     }
 
     @Override

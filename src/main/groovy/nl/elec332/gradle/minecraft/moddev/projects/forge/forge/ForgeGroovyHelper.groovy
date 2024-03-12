@@ -1,11 +1,9 @@
 package nl.elec332.gradle.minecraft.moddev.projects.forge.forge
 
-
 import nl.elec332.gradle.minecraft.moddev.MLProperties
-import nl.elec332.gradle.minecraft.moddev.ModLoader
 import nl.elec332.gradle.minecraft.moddev.ProjectHelper
+import nl.elec332.gradle.minecraft.moddev.ProjectType
 import nl.elec332.gradle.minecraft.moddev.SettingsPlugin
-import nl.elec332.gradle.minecraft.moddev.projects.forge.ForgeBasedExtension
 import org.gradle.api.Project
 
 /**
@@ -13,38 +11,10 @@ import org.gradle.api.Project
  */
 class ForgeGroovyHelper {
 
-    static void addMixinAnnotationProcessor(Project project) {
-        ProjectHelper.applyToProject(project, {
-            dependencies {
-                annotationProcessor "org.spongepowered:mixin:" + ProjectHelper.getProperty(project, MLProperties.MIXIN_VERSION) + ":processor"
-            }
-            afterEvaluate {
-                sourceSets.each {
-                    tasks.named(it.compileJavaTaskName).configure {
-                        dependsOn("createMcpToSrg")
-                        File destDir = it.getDestinationDirectory().getAsFile().get()
-                        options.compilerArgs.addAll("-AreobfTsrgFile=" + project.layout.buildDir.file("createMcpToSrg/output.tsrg").get().asFile.path, "-AoutRefMapFile=" + new File(destDir, ProjectHelper.getMixinRefMap(project)).path, "-AmappingTypes=tsrg", "-AdefaultObfuscationEnv=searge")
-                    }
-                }
-            }
-        })
-    }
-
-    static void setMinecraftSettings(Project project, ForgeExtension extension) {
+    static void setMinecraftSettings(Project project) {
         ProjectHelper.applyToProject(project, {
             minecraft {
-                if (extension.copyIdeResources) {
-                    copyIdeResources = true
-                }
                 mappings channel: 'official', version: ProjectHelper.getStringProperty(project, MLProperties.MC_VERSION)
-            }
-        })
-    }
-
-    static void setDependencies(Project project) {
-        ProjectHelper.applyToProject(project, {
-            dependencies {
-                minecraft "net.minecraftforge:forge:" + ProjectHelper.getStringProperty(project, MLProperties.MC_VERSION) + "-" + ProjectHelper.getStringProperty(project, MLProperties.FORGE_VERSION)
             }
         })
     }
@@ -63,9 +33,12 @@ class ForgeGroovyHelper {
         })
     }
 
-    static void setRunSettings(Project project, ForgeBasedExtension extension) {
+    static void setRunSettings(Project project, ForgeExtension extension) {
         ProjectHelper.applyToProject(project, {
             minecraft {
+                if (extension.copyIdeResources) {
+                    copyIdeResources = true
+                }
                 File f = file('src/main/resources/META-INF/accesstransformer.cfg')
                 if (f.exists()) {
                     accessTransformer = f
@@ -75,7 +48,7 @@ class ForgeGroovyHelper {
                         if (extension.runtimeSource != null) {
                             source(extension.runtimeSource)
                         }
-                        workingDirectory project.rootProject.file("run/" + ModLoader.getIdentifier(project) + "/" + it.name)
+                        workingDirectory project.rootProject.file("run/" + ProjectType.getIdentifier(project) + "/" + it.name)
                         if (extension.loggingMarkers != null) {
                             property 'forge.logging.markers', extension.loggingMarkers
                         }

@@ -1,9 +1,8 @@
 package nl.elec332.gradle.minecraft.moddev.projects.forge.neo
 
-
 import nl.elec332.gradle.minecraft.moddev.MLProperties
-import nl.elec332.gradle.minecraft.moddev.ModLoader
 import nl.elec332.gradle.minecraft.moddev.ProjectHelper
+import nl.elec332.gradle.minecraft.moddev.ProjectType
 import nl.elec332.gradle.minecraft.moddev.projects.forge.ForgeBasedExtension
 import org.gradle.api.Project
 
@@ -21,14 +20,6 @@ class NeoGroovyHelper {
         })
     }
 
-    static void setDependencies(Project project) {
-        ProjectHelper.applyToProject(project, {
-            dependencies {
-                implementation "net.neoforged:neoforge:" + ProjectHelper.getStringProperty(project, MLProperties.NEO_VERSION)
-            }
-        })
-    }
-
     static void setRunSettings(Project project, ForgeBasedExtension extension) {
         ProjectHelper.applyToProject(project, {
             minecraft {
@@ -39,7 +30,7 @@ class NeoGroovyHelper {
             }
             runs {
                 configureEach {
-                    workingDirectory project.rootProject.file("run/" + ModLoader.getIdentifier(project) + "/" + it.name)
+                    workingDirectory project.rootProject.file("run/" + ProjectType.getIdentifier(project) + "/" + it.name)
                     if (extension.runtimeSource == null) {
                         modSource project.sourceSets.main
                     } else {

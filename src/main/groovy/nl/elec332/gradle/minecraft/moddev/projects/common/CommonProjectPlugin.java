@@ -2,10 +2,12 @@ package nl.elec332.gradle.minecraft.moddev.projects.common;
 
 import nl.elec332.gradle.minecraft.moddev.MLProperties;
 import nl.elec332.gradle.minecraft.moddev.ProjectHelper;
+import nl.elec332.gradle.minecraft.moddev.ProjectType;
 import nl.elec332.gradle.minecraft.moddev.projects.AbstractPlugin;
 import nl.elec332.gradle.minecraft.moddev.projects.ModMetadata;
 import org.gradle.api.Project;
 import org.gradle.api.initialization.Settings;
+import org.gradle.api.plugins.JavaPlugin;
 
 import java.util.function.Consumer;
 
@@ -15,7 +17,7 @@ import java.util.function.Consumer;
 public class CommonProjectPlugin extends AbstractPlugin<CommonProjectExtension> {
 
     public CommonProjectPlugin() {
-        super(null);
+        super(ProjectType.COMMON);
     }
 
     @Override
@@ -25,12 +27,12 @@ public class CommonProjectPlugin extends AbstractPlugin<CommonProjectExtension> 
 
     @Override
     protected void beforeProject(Project project) {
+        project.getDependencies().add(JavaPlugin.COMPILE_ONLY_CONFIGURATION_NAME, "org.spongepowered:mixin:" + ProjectHelper.getStringProperty(project, MLProperties.MIXIN_VERSION));
     }
 
     @Override
     protected void afterProject(Project project) {
         CommonProjectGroovyHelper.setMinecraft(project);
-        CommonProjectGroovyHelper.addMixinDep(project);
     }
 
     @Override
@@ -47,11 +49,6 @@ public class CommonProjectPlugin extends AbstractPlugin<CommonProjectExtension> 
 
     @Override
     protected void addMixinDependencies(Project project) {
-    }
-
-    @Override
-    protected String getArchiveAppendix() {
-        return "Common";
     }
 
     @Override

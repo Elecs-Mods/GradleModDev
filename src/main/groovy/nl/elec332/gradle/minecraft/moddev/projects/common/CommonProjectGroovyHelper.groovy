@@ -18,12 +18,4 @@ class CommonProjectGroovyHelper {
         })
     }
 
-    static void addMixinDep(Project project) {
-        ProjectHelper.applyToProject(project, {
-            dependencies {
-                compileOnly "org.spongepowered:mixin:" + ProjectHelper.getStringProperty(project, MLProperties.MIXIN_VERSION)
-            }
-        })
-    }
-
 }

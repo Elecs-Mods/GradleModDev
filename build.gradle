@@ -6,7 +6,7 @@ plugins {
 }
 
 group "nl.elec332.gradle.minecraft"
-version "1.0.A2"
+version "1.0.3-Beta"
 
 repositories {
     mavenCentral()

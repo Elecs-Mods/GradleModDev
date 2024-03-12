@@ -1,8 +1,8 @@
 package nl.elec332.gradle.minecraft.moddev.projects.forge.neo;
 
 import nl.elec332.gradle.minecraft.moddev.MLProperties;
-import nl.elec332.gradle.minecraft.moddev.ModLoader;
 import nl.elec332.gradle.minecraft.moddev.ProjectHelper;
+import nl.elec332.gradle.minecraft.moddev.ProjectType;
 import nl.elec332.gradle.minecraft.moddev.SettingsPlugin;
 import nl.elec332.gradle.minecraft.moddev.projects.AbstractPluginMLSC;
 import nl.elec332.gradle.minecraft.moddev.projects.CommonExtension;
@@ -29,7 +29,7 @@ public class NeoProjectPluginSC extends AbstractPluginMLSC {
         target.beforeEvaluate(p -> {
             p.getExtensions().configure(CommonExtension.class, c -> {
                 c.metadata(md -> md.loader("elecjava"));
-                Project forge = SettingsPlugin.getDetails(target).getProject(ModLoader.FORGE);
+                Project forge = SettingsPlugin.getDetails(target).getProject(ProjectType.FORGE);
                 if (forge != null) {
                     ((CommonMLExtension) c).importMetadata(forge);
                 }

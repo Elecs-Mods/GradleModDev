@@ -2,12 +2,9 @@ package nl.elec332.gradle.minecraft.moddev.projects;
 
 import nl.elec332.gradle.minecraft.moddev.MLProperties;
 import nl.elec332.gradle.minecraft.moddev.ProjectHelper;
-import nl.elec332.gradle.minecraft.moddev.SettingsPlugin;
 import org.gradle.api.Action;
 import org.gradle.api.Plugin;
 import org.gradle.api.Project;
-import org.gradle.api.plugins.JavaPlugin;
-import org.gradle.api.plugins.JavaPluginExtension;
 import org.gradle.api.publish.PublishingExtension;
 import org.gradle.api.publish.maven.MavenArtifact;
 import org.gradle.api.publish.maven.MavenPublication;
@@ -26,7 +23,7 @@ public abstract class AbstractPluginSC implements Plugin<Project> {
     public final void apply(@NotNull Project target) {
         ProjectHelper.checkProperties(target, Set.of(MLProperties.ELECLOADER_VERSION));
         target.getRepositories().mavenLocal();
-        applyPlugin(target, getSourceSet(target, SourceSet.MAIN_SOURCE_SET_NAME));
+        applyPlugin(target, ProjectHelper.getSourceSets(target).maybeCreate(SourceSet.MAIN_SOURCE_SET_NAME));
     }
 
     protected abstract void applyPlugin(Project target, SourceSet main);
@@ -50,10 +47,6 @@ public abstract class AbstractPluginSC implements Plugin<Project> {
 
     protected static MavenPublication getModPublication(Project target) {
         return Objects.requireNonNull(target.getExtensions().getByType(PublishingExtension.class)).getPublications().maybeCreate(MOD_PUBLICATION, MavenPublication.class);
-    }
-
-    protected static SourceSet getSourceSet(Project target, String name) {
-        return target.getExtensions().getByType(JavaPluginExtension.class).getSourceSets().maybeCreate(name);
     }
 
 }

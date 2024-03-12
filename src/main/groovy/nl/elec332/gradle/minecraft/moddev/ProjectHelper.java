@@ -6,8 +6,10 @@ import nl.elec332.gradle.minecraft.moddev.projects.AbstractPlugin;
 import org.gradle.api.Action;
 import org.gradle.api.Project;
 import org.gradle.api.internal.project.ProjectInternal;
+import org.gradle.api.plugins.JavaPluginExtension;
 import org.gradle.api.resources.MissingResourceException;
 import org.gradle.api.resources.ResourceException;
+import org.gradle.api.tasks.SourceSetContainer;
 import org.gradle.groovy.scripts.ScriptSource;
 import org.gradle.groovy.scripts.TextResourceScriptSource;
 import org.gradle.internal.DisplayName;
@@ -25,6 +27,7 @@ import java.lang.reflect.Field;
 import java.nio.charset.Charset;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
+import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -32,6 +35,10 @@ import java.util.stream.Collectors;
  * Created by Elec332 on 03-09-2023
  */
 public class ProjectHelper {
+
+    public static SourceSetContainer getSourceSets(Project root) {
+        return Objects.requireNonNull(root.getExtensions().getByType(JavaPluginExtension.class).getSourceSets());
+    }
 
     public static void afterEvaluateSafe(Project target, Action<Project> runnable) {
         if (hasEvaluated(target)) {
@@ -64,8 +71,7 @@ public class ProjectHelper {
     }
 
     public static String getMixinRefMap(Project project) {
-        ModLoader modLoader = ProjectHelper.getPlugin(project).getModLoader();
-        String fileNameBase = (modLoader == null ? ".common" : "." + modLoader.name()) + ".refmap.json";
+        String fileNameBase = ProjectHelper.getPlugin(project).getProjectType().getName() + ".refmap.json";
         return ProjectHelper.getProperty(project, MLProperties.MOD_ID) + fileNameBase;
     }
 

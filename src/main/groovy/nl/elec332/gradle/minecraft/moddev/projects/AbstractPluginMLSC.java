@@ -3,6 +3,7 @@ package nl.elec332.gradle.minecraft.moddev.projects;
 import nl.elec332.gradle.minecraft.moddev.ModLoader;
 import nl.elec332.gradle.minecraft.moddev.ProjectHelper;
 import nl.elec332.gradle.minecraft.moddev.SettingsPlugin;
+import nl.elec332.gradle.minecraft.moddev.tasks.CheckCompileTask;
 import org.gradle.api.Project;
 import org.gradle.api.Task;
 import org.gradle.api.plugins.JavaPlugin;
@@ -25,12 +26,8 @@ public abstract class AbstractPluginMLSC extends AbstractPluginSC {
     protected final void applyPlugin(Project target, SourceSet main) {
         Project commonProject = SettingsPlugin.getDetails(target).getCommonProject();
         commonProject.afterEvaluate(p -> p.getConfigurations().getByName(COMMON_CONFIG_NAME).getDependencies().forEach(dep -> target.getDependencies().add(JavaPlugin.IMPLEMENTATION_CONFIGURATION_NAME, dep)));
-        SourceSet commonMain = getSourceSet(commonProject, SourceSet.MAIN_SOURCE_SET_NAME);
-        target.afterEvaluate(trgt -> {
-            trgt.getTasks().named(AbstractGroovyHelper.CHECK_CLASSES_TASK, CheckCompileTask.class, t -> {
-                t.checkSource(commonMain);
-            });
-        });
+        SourceSet commonMain = ProjectHelper.getSourceSets(target).maybeCreate(SourceSet.MAIN_SOURCE_SET_NAME);
+        target.beforeEvaluate(trgt -> trgt.getTasks().named(AbstractPlugin.CHECK_CLASSES_TASK, CheckCompileTask.class, t -> t.checkSource(commonMain)));
         target.getDependencies().add(JavaPlugin.COMPILE_ONLY_CONFIGURATION_NAME, commonProject);
         String classifier = target.getName();
 
@@ -50,9 +47,8 @@ public abstract class AbstractPluginMLSC extends AbstractPluginSC {
         }));
 
         var jarTask = target.getTasks().named(JavaPlugin.JAR_TASK_NAME, Jar.class, j -> {
-            j.getArchiveClassifier().set(classifier);
             j.from(commonMain.getOutput());
-            j.getManifest().attributes(Map.of(MAPPINGS, Objects.requireNonNull(ProjectHelper.getPlugin(target).getModLoader().getMapping())));
+            j.getManifest().attributes(Map.of(MAPPINGS, Objects.requireNonNull(Objects.requireNonNull(ProjectHelper.getPlugin(target).getProjectType().getModLoader()).getMapping())));
         });
 
         var remapTask = target.getTasks().register(REMAPPED_JAR_TASK_NAME, t -> {
@@ -74,7 +70,7 @@ public abstract class AbstractPluginMLSC extends AbstractPluginSC {
             a.builtBy(remapTask);
         })));
 
-        SourceSet ss = getSourceSet(target, "runTarget");
+        SourceSet ss = ProjectHelper.getSourceSets(target).maybeCreate("runTarget");
         ss.getJava().setSrcDirs(Collections.emptyList());
         ss.getResources().setSrcDirs(Collections.emptyList());
         var copyMod = target.getTasks().register("copyMod", Copy.class, t -> {

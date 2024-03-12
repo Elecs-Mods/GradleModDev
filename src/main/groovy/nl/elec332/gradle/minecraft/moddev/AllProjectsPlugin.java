@@ -1,11 +1,12 @@
 package nl.elec332.gradle.minecraft.moddev;
 
-import nl.elec332.gradle.minecraft.moddev.projects.AbstractGroovyHelper;
 import org.gradle.api.JavaVersion;
 import org.gradle.api.Plugin;
 import org.gradle.api.Project;
+import org.gradle.api.file.Directory;
 import org.gradle.api.initialization.Settings;
 import org.gradle.api.internal.project.ProjectInternal;
+import org.gradle.api.plugins.ExtraPropertiesExtension;
 import org.gradle.api.plugins.JavaLibraryPlugin;
 import org.gradle.api.plugins.JavaPluginExtension;
 import org.gradle.api.tasks.SourceSet;
@@ -24,6 +25,7 @@ import org.jetbrains.annotations.NotNull;
 public class AllProjectsPlugin implements Plugin<Project> {
 
     private static final String UTF8 = "UTF-8";
+    public static String GENERATED_RESOURCES = "src/generated/resources";
 
     @Override
     public void apply(@NotNull Project target) {
@@ -32,7 +34,7 @@ public class AllProjectsPlugin implements Plugin<Project> {
 
         target.getPluginManager().apply(JavaLibraryPlugin.class);
         looseConfigure(target, cfg);
-        AbstractGroovyHelper.setProperties(target, false, null);
+        setProperties(target, false, null);
 
         target.getExtensions().configure(JavaPluginExtension.class, e -> {
             e.getToolchain().getLanguageVersion().set(JavaLanguageVersion.of(cfg.javaVersion));
@@ -40,10 +42,19 @@ public class AllProjectsPlugin implements Plugin<Project> {
             e.setTargetCompatibility(JavaVersion.toVersion(cfg.javaVersion));
             e.getSourceSets().whenObjectAdded(ss -> configureSourceSet(target, ss));
             e.getSourceSets().forEach(ss -> configureSourceSet(target, ss));
-            e.getSourceSets().getByName(SourceSet.MAIN_SOURCE_SET_NAME, ss -> ss.getResources().srcDir(AbstractGroovyHelper.GENERATED_RESOURCES));
+            e.getSourceSets().getByName(SourceSet.MAIN_SOURCE_SET_NAME, ss -> ss.getResources().srcDir(GENERATED_RESOURCES));
             e.withSourcesJar();
             e.withJavadocJar();
         });
+    }
+
+    public static void setProperties(Project target, boolean hasMod, ModLoader ml) {
+        ExtraPropertiesExtension ext = target.getExtensions().getExtraProperties();
+        ext.set("modProject", hasMod);
+        ext.set("hasModLoader", hasMod && ml != null);
+        if (hasMod && ml != null) {
+            ext.set("modLoader", ml.name());
+        }
     }
 
     public static void looseConfigure(Project target, SettingsPlugin.ModDevConfig cfg) {
@@ -64,8 +75,12 @@ public class AllProjectsPlugin implements Plugin<Project> {
         });
     }
 
+    public static Directory generatedResourceFolder(Project target) {
+        return target.getLayout().getBuildDirectory().dir("generated/genResources").get();
+    }
+
     private void configureSourceSet(Project project, SourceSet sourceSet) {
-        sourceSet.getResources().srcDir(project.getLayout().getBuildDirectory().dir("generated/genResources/" + sourceSet.getName()));
+        sourceSet.getResources().srcDir(generatedResourceFolder(project).dir(sourceSet.getName()));
     }
 
 }

@@ -4,6 +4,7 @@ import groovy.lang.Closure;
 import org.gradle.api.Action;
 import org.gradle.util.internal.ConfigureUtil;
 
+import java.io.Serializable;
 import java.util.Collection;
 import java.util.Map;
 import java.util.Set;
@@ -11,7 +12,7 @@ import java.util.Set;
 /**
  * Created by Elec332 on 07-09-2023
  */
-public interface ModMetadata {
+public interface ModMetadata extends Serializable {
 
     void importFrom(ModMetadata meta);
 

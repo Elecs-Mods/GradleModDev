@@ -1,7 +1,5 @@
 package nl.elec332.gradle.minecraft.moddev;
 
-import nl.elec332.gradle.minecraft.moddev.projects.common.CommonProjectPlugin;
-import nl.elec332.gradle.minecraft.moddev.projects.common.CommonProjectPluginSC;
 import org.gradle.api.Plugin;
 import org.gradle.api.Project;
 import org.gradle.api.artifacts.dsl.RepositoryHandler;
@@ -31,22 +29,22 @@ public class SettingsPlugin implements Plugin<Settings> {
 
         public boolean multiProject = true;
 
-        private final Set<ModLoader> loaders = new HashSet<>();
+        private final Set<ProjectType> loaders = new HashSet<>();
 
         public void enableForge() {
-            loaders.add(ModLoader.FORGE);
+            loaders.add(ProjectType.FORGE);
         }
 
         public void enableNeoForge() {
-            loaders.add(ModLoader.NEO_FORGE);
+            loaders.add(ProjectType.NEO_FORGE);
         }
 
         public void enableFabric() {
-            loaders.add(ModLoader.FABRIC);
+            loaders.add(ProjectType.FABRIC);
         }
 
         public void enableQuilt() {
-            loaders.add(ModLoader.QUILT);
+            loaders.add(ProjectType.QUILT);
         }
 
         public void enableAll() {
@@ -60,7 +58,7 @@ public class SettingsPlugin implements Plugin<Settings> {
 
     public static class ModDevDetails {
 
-        private final Map<ModLoader, Project> projects = new HashMap<>();
+        private final Map<ProjectType, Project> projects = new HashMap<>();
         private boolean generateModInfo = true;
         private boolean superCommonMode = false;
 
@@ -69,7 +67,7 @@ public class SettingsPlugin implements Plugin<Settings> {
             if (singleProject()) {
                 throw new UnsupportedOperationException();
             }
-            return Objects.requireNonNull(projects.get(null), "Common project hasn't been initialized yet!");
+            return Objects.requireNonNull(projects.get(ProjectType.COMMON), "Common project hasn't been initialized yet!");
         }
 
         public final boolean singleProject() {
@@ -85,7 +83,7 @@ public class SettingsPlugin implements Plugin<Settings> {
         }
 
         @Nullable
-        public Project getProject(@NotNull ModLoader ml) {
+        public Project getProject(@NotNull ProjectType ml) {
             return projects.get(Objects.requireNonNull(ml));
         }
 
@@ -113,26 +111,15 @@ public class SettingsPlugin implements Plugin<Settings> {
             ProjectHelper.addPlugin(rootProject, "org.jetbrains.gradle.plugin.idea-ext", cfg.ideaExtVersion);
             if (cfg.rootIsCommon) {
                 rootProject.getPluginManager().apply(AllProjectsPlugin.class);
-                if (cfg.superCommonMode) {
-                    rootProject.getPluginManager().apply(CommonProjectPluginSC.class);
-                }
-                rootProject.getPluginManager().apply(CommonProjectPlugin.class);
-                mdd.projects.put(null, rootProject);
+                ProjectType.COMMON.apply(rootProject, cfg.superCommonMode);
+                mdd.projects.put(ProjectType.COMMON, rootProject);
             } else {
                 rootProject.getPluginManager().apply(JavaPlugin.class);
                 AllProjectsPlugin.looseConfigure(rootProject, cfg);
             }
             rootProject.subprojects(sp -> {
                 sp.getPluginManager().apply(AllProjectsPlugin.class);
-                if (ModLoader.getIdentifier(sp).equals(ModLoader.COMMON_PROJECT_NAME) && !cfg.rootIsCommon) {
-                    mdd.projects.put(null, sp);
-                    if (cfg.superCommonMode) {
-                        rootProject.getPluginManager().apply(CommonProjectPluginSC.class);
-                    }
-                    sp.getPluginManager().apply(CommonProjectPlugin.class);
-                    return;
-                }
-                for (ModLoader l : ModLoader.values()) {
+                for (ProjectType l : ProjectType.values()) {
                     if (l.isType(sp)) {
                         mdd.projects.put(l, sp);
                         l.apply(sp, cfg.superCommonMode);
@@ -151,7 +138,8 @@ public class SettingsPlugin implements Plugin<Settings> {
                 singleProject[0] = true;
             } else if (!cfg.loaders.isEmpty()) {
                 if (!cfg.rootIsCommon) {
-                    s.include(ModLoader.COMMON_PROJECT_NAME);
+                    //Common project must go first, so add it manually here
+                    s.include(ProjectType.COMMON.getName());
                 }
                 cfg.loaders.forEach(l -> {
                     String name = l.getName();

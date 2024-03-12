@@ -1,15 +1,19 @@
 package nl.elec332.gradle.minecraft.moddev.projects.forge.forge;
 
 import nl.elec332.gradle.minecraft.moddev.MLProperties;
-import nl.elec332.gradle.minecraft.moddev.ModLoader;
 import nl.elec332.gradle.minecraft.moddev.ProjectHelper;
+import nl.elec332.gradle.minecraft.moddev.ProjectType;
 import nl.elec332.gradle.minecraft.moddev.projects.ModMetadata;
 import nl.elec332.gradle.minecraft.moddev.projects.forge.ForgeBasedPlugin;
 import org.gradle.api.Project;
 import org.gradle.api.initialization.Settings;
+import org.gradle.api.plugins.JavaPlugin;
 import org.gradle.api.publish.maven.tasks.AbstractPublishToMaven;
+import org.gradle.api.tasks.compile.JavaCompile;
 import org.gradle.jvm.tasks.Jar;
 
+import java.io.File;
+import java.util.List;
 import java.util.Map;
 import java.util.function.Consumer;
 
@@ -19,15 +23,10 @@ import java.util.function.Consumer;
 public class ForgeProjectPlugin extends ForgeBasedPlugin<ForgeExtension> {
 
     public ForgeProjectPlugin() {
-        super(ModLoader.FORGE);
+        super(ProjectType.FORGE);
     }
 
     public static final String REMAP_JAR_TASK = "reobfJar";
-
-    @Override
-    protected String getArchiveAppendix() {
-        return "Forge";
-    }
 
     @Override
     protected void preparePlugins(Project project, Settings settings) {
@@ -36,14 +35,14 @@ public class ForgeProjectPlugin extends ForgeBasedPlugin<ForgeExtension> {
 
     @Override
     protected void beforeProject(Project project) {
+        project.getTasks().withType(AbstractPublishToMaven.class, m -> m.dependsOn(REMAP_JAR_TASK));
     }
 
     @Override
     protected void afterProject(Project project) {
+        project.getDependencies().add("minecraft", "net.minecraftforge:forge:" + ProjectHelper.getStringProperty(project, MLProperties.MC_VERSION) + "-" + ProjectHelper.getStringProperty(project, MLProperties.FORGE_VERSION));
+        ForgeGroovyHelper.setMinecraftSettings(project);
         ForgeGroovyHelper.setRunSettings(project, getExtension(project));
-        ForgeGroovyHelper.setMinecraftSettings(project, getExtension(project));
-        ForgeGroovyHelper.setDependencies(project);
-        project.getTasks().withType(AbstractPublishToMaven.class, m -> m.dependsOn(REMAP_JAR_TASK));
     }
 
     @Override
@@ -58,7 +57,17 @@ public class ForgeProjectPlugin extends ForgeBasedPlugin<ForgeExtension> {
         if (!ProjectHelper.hasProperty(project, MLProperties.MIXIN_VERSION)) {
             throw new RuntimeException("Missing property: " + MLProperties.MIXIN_VERSION);
         }
-        ForgeGroovyHelper.addMixinAnnotationProcessor(project);
+        project.getDependencies().add(JavaPlugin.ANNOTATION_PROCESSOR_CONFIGURATION_NAME, "org.spongepowered:mixin:" + ProjectHelper.getProperty(project, MLProperties.MIXIN_VERSION) + ":processor");
+        project.afterEvaluate(p -> ProjectHelper.getSourceSets(p).forEach(ss -> p.getTasks().named(ss.getCompileJavaTaskName(), JavaCompile.class, c -> {
+            c.dependsOn("createMcpToSrg");
+            File destDir = c.getDestinationDirectory().getAsFile().get();
+            c.getOptions().getCompilerArgs().addAll(List.of(
+                    "-AreobfTsrgFile=" + p.getLayout().getBuildDirectory().file("createMcpToSrg/output.tsrg").get().getAsFile().getPath(),
+                    "-AoutRefMapFile=" + new File(destDir, ProjectHelper.getMixinRefMap(project)).getPath(),
+                    "-AmappingTypes=tsrg",
+                    "-AdefaultObfuscationEnv=searge"
+            ));
+        })));
     }
 
     @Override

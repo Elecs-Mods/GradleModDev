@@ -12,7 +12,7 @@ import org.gradle.api.Project
 /**
  * Created by Elec332 on 07-09-2023
  */
-class ModMetadataImpl implements ModMetadata, Serializable {
+class ModMetadataImpl implements ModMetadata {
 
     static ModMetadata generate(Project project, Collection<Action<ModMetadata>> mods) {
         var mm = new ModMetadataImpl(project)
@@ -21,7 +21,7 @@ class ModMetadataImpl implements ModMetadata, Serializable {
     }
 
     private ModMetadataImpl(Project project) {
-        this.loader = ProjectHelper.getPlugin(project).getModLoader()
+        this.loader = ProjectHelper.getPlugin(project).getProjectType().getModLoader()
         this.data = new HashMap()
         this.modId_INT = ProjectHelper.getStringProperty(project, MLProperties.MOD_ID)
         this.altLoaders = new HashSet<>()

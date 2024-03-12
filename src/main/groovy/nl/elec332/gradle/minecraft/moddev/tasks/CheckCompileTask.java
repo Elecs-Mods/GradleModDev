@@ -1,4 +1,4 @@
-package nl.elec332.gradle.minecraft.moddev.projects;
+package nl.elec332.gradle.minecraft.moddev.tasks;
 
 import nl.elec332.gradle.minecraft.moddev.ProjectHelper;
 import org.gradle.api.plugins.JavaPlugin;

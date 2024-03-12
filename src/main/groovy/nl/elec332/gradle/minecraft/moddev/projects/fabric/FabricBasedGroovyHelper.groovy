@@ -1,8 +1,8 @@
 package nl.elec332.gradle.minecraft.moddev.projects.fabric
 
 
-import nl.elec332.gradle.minecraft.moddev.ModLoader
 import nl.elec332.gradle.minecraft.moddev.ProjectHelper
+import nl.elec332.gradle.minecraft.moddev.ProjectType
 import nl.elec332.gradle.minecraft.moddev.projects.CommonMLExtension
 import org.gradle.api.Project
 
@@ -16,7 +16,7 @@ class FabricBasedGroovyHelper {
             loom {
                 runs {
                     configureEach {
-                        runDir project.relativePath(project.rootProject.file("run/" + ModLoader.getIdentifier(project) + "/" + it.name))
+                        runDir project.relativePath(project.rootProject.file("run/" + ProjectType.getIdentifier(project) + "/" + it.name))
                         if (extension.runtimeSource != null) {
                             setSource extension.runtimeSource
                         }
