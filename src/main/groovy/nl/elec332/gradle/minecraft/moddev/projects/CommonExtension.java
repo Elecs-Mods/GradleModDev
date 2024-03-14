@@ -1,7 +1,7 @@
 package nl.elec332.gradle.minecraft.moddev.projects;
 
 import groovy.json.JsonBuilder;
-import nl.elec332.gradle.minecraft.moddev.ProjectHelper;
+import nl.elec332.gradle.minecraft.moddev.util.ProjectHelper;
 import org.gradle.api.Action;
 import org.gradle.api.JavaVersion;
 import org.gradle.api.Project;

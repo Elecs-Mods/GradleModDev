@@ -1,11 +1,10 @@
 package nl.elec332.gradle.minecraft.moddev;
 
+import nl.elec332.gradle.minecraft.moddev.util.GradleInternalHelper;
 import org.gradle.api.JavaVersion;
 import org.gradle.api.Plugin;
 import org.gradle.api.Project;
 import org.gradle.api.file.Directory;
-import org.gradle.api.initialization.Settings;
-import org.gradle.api.internal.project.ProjectInternal;
 import org.gradle.api.plugins.ExtraPropertiesExtension;
 import org.gradle.api.plugins.JavaLibraryPlugin;
 import org.gradle.api.plugins.JavaPluginExtension;
@@ -29,12 +28,11 @@ public class AllProjectsPlugin implements Plugin<Project> {
 
     @Override
     public void apply(@NotNull Project target) {
-        Settings settings = ((ProjectInternal) target).getGradle().getSettings();
-        SettingsPlugin.ModDevConfig cfg = settings.getExtensions().getByType(SettingsPlugin.ModDevConfig.class);
+        SettingsPlugin.ModDevConfig cfg = GradleInternalHelper.getGradleSettings(target).getExtensions().getByType(SettingsPlugin.ModDevConfig.class);
 
         target.getPluginManager().apply(JavaLibraryPlugin.class);
         looseConfigure(target, cfg);
-        setProperties(target, false, null);
+        setProperties(target, null);
 
         target.getExtensions().configure(JavaPluginExtension.class, e -> {
             e.getToolchain().getLanguageVersion().set(JavaLanguageVersion.of(cfg.javaVersion));
@@ -48,12 +46,15 @@ public class AllProjectsPlugin implements Plugin<Project> {
         });
     }
 
-    public static void setProperties(Project target, boolean hasMod, ModLoader ml) {
+    public static void setProperties(Project target, ProjectType type) {
         ExtraPropertiesExtension ext = target.getExtensions().getExtraProperties();
-        ext.set("modProject", hasMod);
-        ext.set("hasModLoader", hasMod && ml != null);
-        if (hasMod && ml != null) {
-            ext.set("modLoader", ml.name());
+        ext.set("modProject", type != null);
+        ext.set("hasModLoader", type != null && type.getModLoader() != null);
+        if (type != null) {
+            ext.set("modProjectType", type.name());
+            if (type.getModLoader() != null) {
+                ext.set("modLoader", type.getModLoader().name());
+            }
         }
     }
 

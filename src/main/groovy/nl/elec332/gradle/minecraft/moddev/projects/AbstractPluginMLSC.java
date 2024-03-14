@@ -1,9 +1,9 @@
 package nl.elec332.gradle.minecraft.moddev.projects;
 
 import nl.elec332.gradle.minecraft.moddev.ModLoader;
-import nl.elec332.gradle.minecraft.moddev.ProjectHelper;
 import nl.elec332.gradle.minecraft.moddev.SettingsPlugin;
 import nl.elec332.gradle.minecraft.moddev.tasks.CheckCompileTask;
+import nl.elec332.gradle.minecraft.moddev.util.ProjectHelper;
 import org.gradle.api.Project;
 import org.gradle.api.Task;
 import org.gradle.api.plugins.JavaPlugin;

@@ -1,7 +1,7 @@
 package nl.elec332.gradle.minecraft.moddev.projects;
 
 import nl.elec332.gradle.minecraft.moddev.MLProperties;
-import nl.elec332.gradle.minecraft.moddev.ProjectHelper;
+import nl.elec332.gradle.minecraft.moddev.util.ProjectHelper;
 import org.gradle.api.Action;
 import org.gradle.api.Plugin;
 import org.gradle.api.Project;

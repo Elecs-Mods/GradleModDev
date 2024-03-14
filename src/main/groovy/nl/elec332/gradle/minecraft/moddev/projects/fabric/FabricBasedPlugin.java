@@ -19,6 +19,10 @@ public abstract class FabricBasedPlugin<E extends FabricBasedExtension> extends 
     public static final String REMAP_JAR_TASK = "remapJar";
 
     @Override
+    protected void beforeProject(Project project) {
+    }
+
+    @Override
     protected void afterProject(Project project) {
         FabricBasedGroovyHelper.setRunDirs(project, getExtension(project));
         FabricBasedGroovyHelper.setRefMapName(project);

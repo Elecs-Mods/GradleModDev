@@ -1,10 +1,10 @@
 package nl.elec332.gradle.minecraft.moddev.projects.fabric.quilt;
 
 import nl.elec332.gradle.minecraft.moddev.MLProperties;
-import nl.elec332.gradle.minecraft.moddev.ProjectHelper;
 import nl.elec332.gradle.minecraft.moddev.projects.AbstractPluginMLSC;
 import nl.elec332.gradle.minecraft.moddev.projects.CommonExtension;
 import nl.elec332.gradle.minecraft.moddev.projects.fabric.FabricBasedPlugin;
+import nl.elec332.gradle.minecraft.moddev.util.ProjectHelper;
 import org.gradle.api.Project;
 import org.gradle.api.Task;
 import org.gradle.api.tasks.SourceSet;

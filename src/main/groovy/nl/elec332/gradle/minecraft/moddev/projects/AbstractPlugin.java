@@ -1,15 +1,16 @@
 package nl.elec332.gradle.minecraft.moddev.projects;
 
-import nl.elec332.gradle.minecraft.moddev.*;
+import nl.elec332.gradle.minecraft.moddev.AllProjectsPlugin;
+import nl.elec332.gradle.minecraft.moddev.MLProperties;
+import nl.elec332.gradle.minecraft.moddev.ProjectType;
+import nl.elec332.gradle.minecraft.moddev.SettingsPlugin;
 import nl.elec332.gradle.minecraft.moddev.tasks.CheckCompileTask;
 import nl.elec332.gradle.minecraft.moddev.tasks.GenerateMixinJson;
 import nl.elec332.gradle.minecraft.moddev.tasks.GenerateModInfo;
+import nl.elec332.gradle.minecraft.moddev.util.ProjectHelper;
 import org.gradle.api.Plugin;
 import org.gradle.api.Project;
 import org.gradle.api.Task;
-import org.gradle.api.initialization.Settings;
-import org.gradle.api.internal.project.ProjectInternal;
-import org.gradle.api.internal.project.ProjectStateInternal;
 import org.gradle.api.plugins.BasePluginExtension;
 import org.gradle.api.plugins.JavaPlugin;
 import org.gradle.api.publish.tasks.GenerateModuleMetadata;
@@ -52,17 +53,13 @@ public abstract class AbstractPlugin<E extends CommonExtension> implements Plugi
 
     @Override
     public final void apply(@NotNull Project target) {
-        Settings settings = ((ProjectInternal) target).getGradle().getSettings();
         SettingsPlugin.ModDevDetails cfg = SettingsPlugin.getDetails(target);
 
-        Set<String> pluginProps = new HashSet<>();
         Set<String> projectProps = new HashSet<>(Set.of(MLProperties.MC_VERSION, MLProperties.MOD_VERSION, MLProperties.MOD_ID, MLProperties.MOD_GROUP_ID, MLProperties.MOD_NAME, MLProperties.MOD_AUTHORS, MLProperties.MOD_LICENSE, MLProperties.MOD_DESCRIPTION));
-        addProperties(pluginProps::add, projectProps::add);
-        ProjectHelper.checkProperties(target, pluginProps);
+        addProperties(projectProps::add);
         E extension = target.getExtensions().create(extensionType(), "modloader", extensionType());
-        preparePlugins(target, settings);
         boolean isCommon = getProjectType() == ProjectType.COMMON;
-        AllProjectsPlugin.setProperties(target, true, getProjectType().getModLoader());
+        AllProjectsPlugin.setProperties(target, getProjectType());
 
         TaskContainer tasks = target.getTasks();
         SettingsPlugin.addRepositories(target.getRepositories());
@@ -157,7 +154,7 @@ public abstract class AbstractPlugin<E extends CommonExtension> implements Plugi
                     if (dp == null || dp == p) {
                         continue;
                     }
-                    if (((ProjectStateInternal) dp.getState()).isUnconfigured() || ((ProjectStateInternal) dp.getState()).isConfiguring()) {
+                    if (!ProjectHelper.hasEvaluated(dp)) {
                         dp.afterEvaluate(ddp -> importModMeta(ddp, p));
                     } else {
                         importModMeta(dp, p);
@@ -179,23 +176,17 @@ public abstract class AbstractPlugin<E extends CommonExtension> implements Plugi
         return this.projectType;
     }
 
-    protected final void addPlugin(Project project, String id, String versionProperty) {
-        ProjectHelper.addPlugin(project, id, ProjectHelper.getStringProperty(project, versionProperty));
-    }
-
     protected abstract void addMixinDependencies(Project project);
 
     protected String getArchiveClassifier() {
         return projectType.getName();
     }
 
-    protected abstract void preparePlugins(Project project, Settings settings);
-
     protected abstract void beforeProject(Project project);
 
     protected abstract void afterProject(Project project);
 
-    protected abstract void addProperties(Consumer<String> pluginProps, Consumer<String> projectProps);
+    protected abstract void addProperties(Consumer<String> projectProps);
 
     protected abstract void checkModMetadata(Project project, ModMetadata metadata);
 

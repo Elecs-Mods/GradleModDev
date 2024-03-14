@@ -1,13 +1,13 @@
 package nl.elec332.gradle.minecraft.moddev.projects.forge.neo;
 
 import nl.elec332.gradle.minecraft.moddev.MLProperties;
-import nl.elec332.gradle.minecraft.moddev.ProjectHelper;
 import nl.elec332.gradle.minecraft.moddev.ProjectType;
 import nl.elec332.gradle.minecraft.moddev.projects.ModMetadata;
 import nl.elec332.gradle.minecraft.moddev.projects.forge.ForgeBasedPlugin;
+import nl.elec332.gradle.minecraft.moddev.util.ProjectHelper;
 import org.gradle.api.Project;
-import org.gradle.api.initialization.Settings;
 import org.gradle.api.plugins.JavaPlugin;
+import org.gradle.util.GradleVersion;
 
 import java.util.function.Consumer;
 
@@ -25,25 +25,21 @@ public class NeoProjectPlugin extends ForgeBasedPlugin<NeoExtension> {
     }
 
     @Override
-    protected void preparePlugins(Project project, Settings settings) {
-        addPlugin(project, "net.neoforged.gradle.userdev", MLProperties.NEO_GRADLE_VERSION);
-    }
-
-    @Override
     protected void beforeProject(Project project) {
-        project.getDependencies().add(JavaPlugin.IMPLEMENTATION_CONFIGURATION_NAME, "net.neoforged:neoforge:" + ProjectHelper.getStringProperty(project, MLProperties.NEO_VERSION));
+        if (GradleVersion.current().getBaseVersion().compareTo(GradleVersion.version("8.7")) < 0) {
+            System.out.println("There's a bug with NeoGradle file locking on gradle versions <8.7, consider updating Gradle.");
+        }
     }
 
     @Override
     protected void afterProject(Project project) {
+        project.getDependencies().add(JavaPlugin.IMPLEMENTATION_CONFIGURATION_NAME, "net.neoforged:neoforge:" + ProjectHelper.getStringProperty(project, MLProperties.NEO_VERSION));
         NeoGroovyHelper.setRunSettings(project, getExtension(project));
         NeoGroovyHelper.setMinecraftSettings(project);
     }
 
     @Override
-    protected void addProperties(Consumer<String> pluginProps, Consumer<String> projectProps) {
-        pluginProps.accept(MLProperties.NEO_GRADLE_VERSION);
-
+    protected void addProperties(Consumer<String> projectProps) {
         projectProps.accept(MLProperties.NEO_VERSION);
     }
 

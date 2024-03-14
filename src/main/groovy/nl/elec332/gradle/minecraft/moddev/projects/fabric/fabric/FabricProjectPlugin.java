@@ -1,13 +1,12 @@
 package nl.elec332.gradle.minecraft.moddev.projects.fabric.fabric;
 
 import nl.elec332.gradle.minecraft.moddev.MLProperties;
-import nl.elec332.gradle.minecraft.moddev.ProjectHelper;
 import nl.elec332.gradle.minecraft.moddev.ProjectType;
 import nl.elec332.gradle.minecraft.moddev.SettingsPlugin;
 import nl.elec332.gradle.minecraft.moddev.projects.ModMetadata;
 import nl.elec332.gradle.minecraft.moddev.projects.fabric.FabricBasedPlugin;
+import nl.elec332.gradle.minecraft.moddev.util.ProjectHelper;
 import org.gradle.api.Project;
-import org.gradle.api.initialization.Settings;
 
 import java.util.function.Consumer;
 
@@ -21,11 +20,6 @@ public class FabricProjectPlugin extends FabricBasedPlugin<FabricExtension> {
     }
 
     @Override
-    protected void preparePlugins(Project project, Settings settings) {
-        addPlugin(project, "fabric-loom", MLProperties.FABRIC_LOOM_VERSION);
-    }
-
-    @Override
     protected void afterProject(Project project) {
         boolean api = getExtension(project).addApiDependency;
         if (api && !ProjectHelper.hasProperty(project, MLProperties.FABRIC_VERSION)) {
@@ -36,9 +30,7 @@ public class FabricProjectPlugin extends FabricBasedPlugin<FabricExtension> {
     }
 
     @Override
-    protected void addProperties(Consumer<String> pluginProps, Consumer<String> projectProps) {
-        pluginProps.accept(MLProperties.FABRIC_LOOM_VERSION);
-
+    protected void addProperties(Consumer<String> projectProps) {
         projectProps.accept(MLProperties.FABRIC_LOADER_VERSION);
     }
 

@@ -2,7 +2,6 @@ package nl.elec332.gradle.minecraft.moddev.projects;
 
 import groovy.lang.Closure;
 import org.gradle.api.Action;
-import org.gradle.util.internal.ConfigureUtil;
 
 import java.io.Serializable;
 import java.util.Collection;
@@ -24,9 +23,7 @@ public interface ModMetadata extends Serializable {
 
     void entryPoints(Map<String, ?> data);
 
-    default void mod(Closure<?> c) {
-        mod(ConfigureUtil.configureUsing(c));
-    }
+    void mod(Closure<?> c);
 
     void loaderVersion(String s);
 
@@ -40,9 +37,7 @@ public interface ModMetadata extends Serializable {
 
     boolean hasDependency(String modId);
 
-    default void dependsOn(String modId, Closure<?> mod) {
-        dependsOn(modId, ConfigureUtil.configureUsing(mod));
-    }
+    void dependsOn(String modId, Closure<?> mod);
 
     void dependsOn(String modId, Action<DependencyInfo> mod);
 

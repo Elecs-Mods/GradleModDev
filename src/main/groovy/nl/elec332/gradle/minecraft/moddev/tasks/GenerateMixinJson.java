@@ -2,9 +2,9 @@ package nl.elec332.gradle.minecraft.moddev.tasks;
 
 import nl.elec332.gradle.minecraft.moddev.AllProjectsPlugin;
 import nl.elec332.gradle.minecraft.moddev.MLProperties;
-import nl.elec332.gradle.minecraft.moddev.ProjectHelper;
 import nl.elec332.gradle.minecraft.moddev.projects.AbstractGroovyHelper;
 import nl.elec332.gradle.minecraft.moddev.projects.CommonExtension;
+import nl.elec332.gradle.minecraft.moddev.util.ProjectHelper;
 import org.gradle.api.DefaultTask;
 import org.gradle.api.tasks.Input;
 import org.gradle.api.tasks.Internal;

@@ -1,9 +1,9 @@
 package nl.elec332.gradle.minecraft.moddev.projects.forge.neo
 
 import nl.elec332.gradle.minecraft.moddev.MLProperties
-import nl.elec332.gradle.minecraft.moddev.ProjectHelper
 import nl.elec332.gradle.minecraft.moddev.ProjectType
 import nl.elec332.gradle.minecraft.moddev.projects.forge.ForgeBasedExtension
+import nl.elec332.gradle.minecraft.moddev.util.ProjectHelper
 import org.gradle.api.Project
 
 /**

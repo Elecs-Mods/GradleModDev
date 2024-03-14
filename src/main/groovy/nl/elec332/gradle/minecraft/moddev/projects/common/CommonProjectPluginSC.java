@@ -2,12 +2,12 @@ package nl.elec332.gradle.minecraft.moddev.projects.common;
 
 import nl.elec332.gradle.minecraft.moddev.MLProperties;
 import nl.elec332.gradle.minecraft.moddev.ModLoader;
-import nl.elec332.gradle.minecraft.moddev.ProjectHelper;
 import nl.elec332.gradle.minecraft.moddev.projects.AbstractPluginSC;
+import nl.elec332.gradle.minecraft.moddev.util.GradleInternalHelper;
+import nl.elec332.gradle.minecraft.moddev.util.ProjectHelper;
 import org.gradle.api.Project;
 import org.gradle.api.artifacts.Configuration;
 import org.gradle.api.file.DuplicatesStrategy;
-import org.gradle.api.internal.tasks.JvmConstants;
 import org.gradle.api.plugins.JavaPlugin;
 import org.gradle.api.publish.maven.plugins.MavenPublishPlugin;
 import org.gradle.api.tasks.SourceSet;
@@ -51,7 +51,7 @@ public final class CommonProjectPluginSC extends AbstractPluginSC {
         });
         addToPublication(target, devTask);
         target.getArtifacts().add("archives", devTask);
-        getModPublication(target).from(target.getComponents().getByName(JvmConstants.JAVA_MAIN_COMPONENT_NAME));
+        getModPublication(target).from(target.getComponents().getByName(GradleInternalHelper.JAVA_MAIN_COMPONENT_NAME));
     }
 
     private void importProperties(Project target) {

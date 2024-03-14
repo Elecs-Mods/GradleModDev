@@ -1,12 +1,11 @@
 package nl.elec332.gradle.minecraft.moddev.projects.forge.forge;
 
 import nl.elec332.gradle.minecraft.moddev.MLProperties;
-import nl.elec332.gradle.minecraft.moddev.ProjectHelper;
 import nl.elec332.gradle.minecraft.moddev.ProjectType;
 import nl.elec332.gradle.minecraft.moddev.projects.ModMetadata;
 import nl.elec332.gradle.minecraft.moddev.projects.forge.ForgeBasedPlugin;
+import nl.elec332.gradle.minecraft.moddev.util.ProjectHelper;
 import org.gradle.api.Project;
-import org.gradle.api.initialization.Settings;
 import org.gradle.api.plugins.JavaPlugin;
 import org.gradle.api.publish.maven.tasks.AbstractPublishToMaven;
 import org.gradle.api.tasks.compile.JavaCompile;
@@ -29,11 +28,6 @@ public class ForgeProjectPlugin extends ForgeBasedPlugin<ForgeExtension> {
     public static final String REMAP_JAR_TASK = "reobfJar";
 
     @Override
-    protected void preparePlugins(Project project, Settings settings) {
-        addPlugin(project, "net.minecraftforge.gradle", MLProperties.FORGE_GRADLE_VERSION);
-    }
-
-    @Override
     protected void beforeProject(Project project) {
         project.getTasks().withType(AbstractPublishToMaven.class, m -> m.dependsOn(REMAP_JAR_TASK));
     }
@@ -46,9 +40,7 @@ public class ForgeProjectPlugin extends ForgeBasedPlugin<ForgeExtension> {
     }
 
     @Override
-    protected void addProperties(Consumer<String> pluginProps, Consumer<String> projectProps) {
-        pluginProps.accept(MLProperties.FORGE_GRADLE_VERSION);
-
+    protected void addProperties(Consumer<String> projectProps) {
         projectProps.accept(MLProperties.FORGE_VERSION);
     }
 

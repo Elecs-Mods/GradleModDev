@@ -1,13 +1,12 @@
 package nl.elec332.gradle.minecraft.moddev.projects.fabric.quilt;
 
 import nl.elec332.gradle.minecraft.moddev.MLProperties;
-import nl.elec332.gradle.minecraft.moddev.ProjectHelper;
 import nl.elec332.gradle.minecraft.moddev.ProjectType;
 import nl.elec332.gradle.minecraft.moddev.SettingsPlugin;
 import nl.elec332.gradle.minecraft.moddev.projects.ModMetadata;
 import nl.elec332.gradle.minecraft.moddev.projects.fabric.FabricBasedPlugin;
+import nl.elec332.gradle.minecraft.moddev.util.ProjectHelper;
 import org.gradle.api.Project;
-import org.gradle.api.initialization.Settings;
 
 import java.util.function.Consumer;
 
@@ -18,11 +17,6 @@ public class QuiltProjectPlugin extends FabricBasedPlugin<QuiltExtension> {
 
     public QuiltProjectPlugin() {
         super(ProjectType.QUILT);
-    }
-
-    @Override
-    protected void preparePlugins(Project project, Settings settings) {
-        addPlugin(project, "org.quiltmc.loom", MLProperties.QUILT_LOOM_VERSION);
     }
 
     @Override
@@ -37,9 +31,7 @@ public class QuiltProjectPlugin extends FabricBasedPlugin<QuiltExtension> {
     }
 
     @Override
-    protected void addProperties(Consumer<String> pluginProps, Consumer<String> projectProps) {
-        pluginProps.accept(MLProperties.QUILT_LOOM_VERSION);
-
+    protected void addProperties(Consumer<String> projectProps) {
         projectProps.accept(MLProperties.QUILT_LOADER_VERSION);
     }
 

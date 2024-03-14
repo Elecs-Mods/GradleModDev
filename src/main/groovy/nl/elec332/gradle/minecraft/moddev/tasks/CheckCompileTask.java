@@ -1,6 +1,6 @@
 package nl.elec332.gradle.minecraft.moddev.tasks;
 
-import nl.elec332.gradle.minecraft.moddev.ProjectHelper;
+import nl.elec332.gradle.minecraft.moddev.util.ProjectHelper;
 import org.gradle.api.plugins.JavaPlugin;
 import org.gradle.api.tasks.SourceSet;
 import org.gradle.api.tasks.compile.JavaCompile;

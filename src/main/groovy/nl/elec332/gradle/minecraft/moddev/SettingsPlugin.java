@@ -1,16 +1,23 @@
 package nl.elec332.gradle.minecraft.moddev;
 
+import nl.elec332.gradle.minecraft.moddev.util.GradleInternalHelper;
+import nl.elec332.gradle.minecraft.moddev.util.ProjectHelper;
+import nl.elec332.gradle.minecraft.moddev.util.RuntimeProjectPluginRequests;
 import org.gradle.api.Plugin;
 import org.gradle.api.Project;
 import org.gradle.api.artifacts.dsl.RepositoryHandler;
 import org.gradle.api.initialization.Settings;
-import org.gradle.api.internal.project.ProjectInternal;
+import org.gradle.api.initialization.dsl.ScriptHandler;
 import org.gradle.api.plugins.JavaPlugin;
+import org.gradle.util.GradleVersion;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.util.*;
+import java.util.function.BiConsumer;
+import java.util.function.Consumer;
+import java.util.function.Function;
 
 public class SettingsPlugin implements Plugin<Settings> {
 
@@ -30,6 +37,10 @@ public class SettingsPlugin implements Plugin<Settings> {
         public boolean multiProject = true;
 
         private final Set<ProjectType> loaders = new HashSet<>();
+
+        public void enableVanilla() {
+            loaders.add(ProjectType.COMMON);
+        }
 
         public void enableForge() {
             loaders.add(ProjectType.FORGE);
@@ -89,7 +100,8 @@ public class SettingsPlugin implements Plugin<Settings> {
 
     }
 
-    public void apply(Settings settings) {
+    public void apply(@NotNull Settings settings) {
+        RuntimeProjectPluginRequests.inject(settings);
         boolean[] singleProject = {false};
         ModDevConfig cfg = settings.getExtensions().create("moddev", ModDevConfig.class);
         ModDevDetails mdd = settings.getExtensions().create("mdd", ModDevDetails.class);
@@ -103,26 +115,30 @@ public class SettingsPlugin implements Plugin<Settings> {
 
         settings.getGradle().projectsLoaded(g -> {
             Project rootProject = g.getRootProject();
+            String id = "org.jetbrains.gradle.plugin.idea-ext";
+            String version = cfg.ideaExtVersion;
+            if (GradleVersion.current().getBaseVersion().compareTo(GradleVersion.version("8.7")) < 0) {
+                rootProject.getBuildscript().getDependencies().add(ScriptHandler.CLASSPATH_CONFIGURATION, id + ":" + id + ".gradle.plugin:" + version);
+                rootProject.afterEvaluate(p -> p.getPluginManager().apply(id));
+            }
+            Consumer<BiConsumer<String, String>> ideaExt = reg -> reg.accept(id, version);
             if (singleProject[0]) {
-                rootProject.getPluginManager().apply(AllProjectsPlugin.class);
-                cfg.loaders.iterator().next().apply(rootProject, cfg.superCommonMode);
+                apply(rootProject, cfg.loaders.iterator().next(), mdd, null);
                 return;
             }
-            ProjectHelper.addPlugin(rootProject, "org.jetbrains.gradle.plugin.idea-ext", cfg.ideaExtVersion);
             if (cfg.rootIsCommon) {
-                rootProject.getPluginManager().apply(AllProjectsPlugin.class);
-                ProjectType.COMMON.apply(rootProject, cfg.superCommonMode);
-                mdd.projects.put(ProjectType.COMMON, rootProject);
+                apply(rootProject, ProjectType.COMMON, mdd, ideaExt);
             } else {
                 rootProject.getPluginManager().apply(JavaPlugin.class);
                 AllProjectsPlugin.looseConfigure(rootProject, cfg);
+                applyPlugins(rootProject, ideaExt);
             }
             rootProject.subprojects(sp -> {
+                sp.getExtensions().getExtraProperties().set(RuntimeProjectPluginRequests.PROP_NAME, null);
                 sp.getPluginManager().apply(AllProjectsPlugin.class);
                 for (ProjectType l : ProjectType.values()) {
                     if (l.isType(sp)) {
-                        mdd.projects.put(l, sp);
-                        l.apply(sp, cfg.superCommonMode);
+                        apply(sp, l , mdd, null);
                     }
                 }
             });
@@ -140,8 +156,12 @@ public class SettingsPlugin implements Plugin<Settings> {
                 if (!cfg.rootIsCommon) {
                     //Common project must go first, so add it manually here
                     s.include(ProjectType.COMMON.getName());
+                    cfg.loaders.add(ProjectType.COMMON);
                 }
                 cfg.loaders.forEach(l -> {
+                    if (l == ProjectType.COMMON) {
+                        return;
+                    }
                     String name = l.getName();
                     File f = new File(s.getRootDir(), name);
                     if (!f.exists() && cfg.superCommonMode) {
@@ -158,6 +178,33 @@ public class SettingsPlugin implements Plugin<Settings> {
         });
 
         settings.getRootProject().setName((String) Objects.requireNonNull(settings.getExtensions().getExtraProperties().get(MLProperties.MOD_NAME)));
+    }
+
+    private void apply(Project project, ProjectType type, ModDevDetails mdd, Consumer<BiConsumer<String, String>> subReg) {
+        Set<String> properties = new HashSet<>();
+        Function<String, String> propGetter = prop -> {
+            if (!properties.contains(prop)) {
+                throw new UnsupportedOperationException();
+            }
+            return ProjectHelper.getStringProperty(project, prop);
+        };
+
+        project.getPluginManager().apply(AllProjectsPlugin.class);
+        type.addProperties(properties::add);
+        ProjectHelper.checkProperties(project, properties);
+        mdd.projects.put(type, project);
+
+        applyPlugins(project, reg -> {
+            if (subReg != null) {
+                subReg.accept(reg);
+            }
+            type.addPlugins(reg, propGetter);
+        });
+        type.apply(project, mdd.superCommonMode);
+    }
+
+    private void applyPlugins(Project project, Consumer<BiConsumer<String, String>> reg) {
+        project.getExtensions().getExtraProperties().set(RuntimeProjectPluginRequests.PROP_NAME, reg);
     }
 
     public static void addRepositories(RepositoryHandler h) {
@@ -185,7 +232,7 @@ public class SettingsPlugin implements Plugin<Settings> {
     }
 
     public static ModDevDetails getDetails(Project project) {
-        return ((ProjectInternal) project).getGradle().getSettings().getExtensions().getByType(ModDevDetails.class);
+        return GradleInternalHelper.getGradleSettings(project).getExtensions().getByType(ModDevDetails.class);
     }
 
     public static boolean isSuperCommonMode(Project project) {
