@@ -25,8 +25,12 @@ public class CommonProjectPlugin extends AbstractPlugin<CommonProjectExtension> 
     }
 
     @Override
-    protected void afterProject(Project project) {
+    public void afterRuntimePluginsAdded(Project project) {
         CommonProjectGroovyHelper.setMinecraft(project);
+    }
+
+    @Override
+    protected void afterProject(Project project) {
     }
 
     @Override

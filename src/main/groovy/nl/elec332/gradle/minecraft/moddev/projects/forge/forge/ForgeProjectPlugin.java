@@ -33,10 +33,14 @@ public class ForgeProjectPlugin extends ForgeBasedPlugin<ForgeExtension> {
     }
 
     @Override
-    protected void afterProject(Project project) {
+    public void afterRuntimePluginsAdded(Project project) {
         project.getDependencies().add("minecraft", "net.minecraftforge:forge:" + ProjectHelper.getStringProperty(project, MLProperties.MC_VERSION) + "-" + ProjectHelper.getStringProperty(project, MLProperties.FORGE_VERSION));
         ForgeGroovyHelper.setMinecraftSettings(project);
         ForgeGroovyHelper.setRunSettings(project, getExtension(project));
+    }
+
+    @Override
+    protected void afterProject(Project project) {
     }
 
     @Override

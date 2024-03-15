@@ -2,7 +2,6 @@ package nl.elec332.gradle.minecraft.moddev;
 
 import nl.elec332.gradle.minecraft.moddev.projects.AbstractPlugin;
 import nl.elec332.gradle.minecraft.moddev.projects.AbstractPluginSC;
-import nl.elec332.gradle.minecraft.moddev.projects.ProjectPluginInitializer;
 import nl.elec332.gradle.minecraft.moddev.projects.common.CommonProjectPlugin;
 import nl.elec332.gradle.minecraft.moddev.projects.common.CommonProjectPluginInitializer;
 import nl.elec332.gradle.minecraft.moddev.projects.common.CommonProjectPluginSC;
@@ -18,6 +17,7 @@ import nl.elec332.gradle.minecraft.moddev.projects.forge.forge.ForgeProjectPlugi
 import nl.elec332.gradle.minecraft.moddev.projects.forge.neo.NeoProjectPlugin;
 import nl.elec332.gradle.minecraft.moddev.projects.forge.neo.NeoProjectPluginInitializer;
 import nl.elec332.gradle.minecraft.moddev.projects.forge.neo.NeoProjectPluginSC;
+import nl.elec332.gradle.minecraft.moddev.util.ProjectPluginInitializer;
 import org.gradle.api.Project;
 import org.jetbrains.annotations.Nullable;
 

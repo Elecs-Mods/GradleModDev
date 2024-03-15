@@ -1,4 +1,6 @@
-package nl.elec332.gradle.minecraft.moddev.projects;
+package nl.elec332.gradle.minecraft.moddev.util;
+
+import org.gradle.api.Project;
 
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
@@ -12,5 +14,11 @@ public interface ProjectPluginInitializer {
     void addPlugins(BiConsumer<String, String> nameVersionPluginRegistry, Function<String, String> propertyGetter);
 
     void addProperties(Consumer<String> pluginProps);
+
+    interface Listener {
+
+        void afterRuntimePluginsAdded(Project project);
+
+    }
 
 }

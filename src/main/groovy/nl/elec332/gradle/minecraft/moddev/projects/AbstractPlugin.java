@@ -8,6 +8,7 @@ import nl.elec332.gradle.minecraft.moddev.tasks.CheckCompileTask;
 import nl.elec332.gradle.minecraft.moddev.tasks.GenerateMixinJson;
 import nl.elec332.gradle.minecraft.moddev.tasks.GenerateModInfo;
 import nl.elec332.gradle.minecraft.moddev.util.ProjectHelper;
+import nl.elec332.gradle.minecraft.moddev.util.ProjectPluginInitializer;
 import org.gradle.api.Plugin;
 import org.gradle.api.Project;
 import org.gradle.api.Task;
@@ -32,7 +33,7 @@ import java.util.stream.Collectors;
 /**
  * Created by Elec332 on 02-09-2023
  */
-public abstract class AbstractPlugin<E extends CommonExtension> implements Plugin<Project> {
+public abstract class AbstractPlugin<E extends CommonExtension> implements Plugin<Project>, ProjectPluginInitializer.Listener {
 
     protected AbstractPlugin(ProjectType projectType) {
         this.projectType = projectType;
@@ -102,7 +103,7 @@ public abstract class AbstractPlugin<E extends CommonExtension> implements Plugi
                 "Specification-Title", ProjectHelper.getStringProperty(target, MLProperties.MOD_ID),
                 "Specification-Vendor", ProjectHelper.getStringProperty(target, MLProperties.MOD_AUTHORS),
                 "Specification-Version", '1',
-                "Implementation-Title", target.getName(),
+                "Implementation-Title", projectType.getName(),
                 "Implementation-Version", jar.getArchiveVersion(),
                 "Implementation-Vendor", ProjectHelper.getStringProperty(target, MLProperties.MOD_AUTHORS),
                 "Implementation-Timestamp", new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssZ").format(new Date())
@@ -183,6 +184,9 @@ public abstract class AbstractPlugin<E extends CommonExtension> implements Plugi
     }
 
     protected abstract void beforeProject(Project project);
+
+    @Override
+    public abstract void afterRuntimePluginsAdded(Project project);
 
     protected abstract void afterProject(Project project);
 

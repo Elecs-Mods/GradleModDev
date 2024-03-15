@@ -27,7 +27,6 @@ public class QuiltProjectPlugin extends FabricBasedPlugin<QuiltExtension> {
         }
         QuiltGroovyHelper.setDependencies(project, api);
         QuiltGroovyHelper.disableTracking(project); //Fuck you Quilt
-        super.afterProject(project);
     }
 
     @Override

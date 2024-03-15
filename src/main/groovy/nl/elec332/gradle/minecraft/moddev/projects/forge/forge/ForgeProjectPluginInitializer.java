@@ -1,7 +1,7 @@
 package nl.elec332.gradle.minecraft.moddev.projects.forge.forge;
 
 import nl.elec332.gradle.minecraft.moddev.MLProperties;
-import nl.elec332.gradle.minecraft.moddev.projects.ProjectPluginInitializer;
+import nl.elec332.gradle.minecraft.moddev.util.ProjectPluginInitializer;
 
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;

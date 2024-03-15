@@ -26,7 +26,6 @@ public class FabricProjectPlugin extends FabricBasedPlugin<FabricExtension> {
             throw new RuntimeException("Missing property: " + MLProperties.FABRIC_VERSION);
         }
         FabricGroovyHelper.setDependencies(project, api);
-        super.afterProject(project);
     }
 
     @Override

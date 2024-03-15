@@ -6,14 +6,19 @@ plugins {
 }
 
 group "nl.elec332.gradle.minecraft"
-version "1.0.3-Beta"
+version "1.0.4-Beta"
 
 repositories {
     mavenCentral()
 }
 
+configurations {
+    shadowed
+    compileOnly.extendsFrom(shadowed)
+}
+
 dependencies {
-    shadow("com.moandjiezana.toml:toml4j:0.7.2") {
+    shadowed("com.moandjiezana.toml:toml4j:0.7.2") {
         transitive = false
     }
 }
@@ -24,7 +29,7 @@ javadoc {
 
 shadowJar {
     enableRelocation true
-    configurations = [project.configurations.shadow]
+    configurations = [project.configurations.shadowed]
     archiveFileName = jar.archiveFileName.get()
     archiveClassifier = ""
 }

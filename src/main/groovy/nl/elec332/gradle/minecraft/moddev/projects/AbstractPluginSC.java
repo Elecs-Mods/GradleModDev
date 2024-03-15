@@ -30,6 +30,7 @@ public abstract class AbstractPluginSC implements Plugin<Project> {
 
     protected static final String COMMON_CONFIG_NAME = "commonImplementation";
     protected static final String DEV_JAR_TASK_NAME = "devJar";
+    protected static final String DEV_ALL_JAR_TASK_NAME = "devAllJar";
     protected static final String REMAPPED_JAR_TASK_NAME = "remappedJar";
     protected static final String MOD_PUBLICATION = "modPublication";
     protected static final String MAPPINGS = "Mappings";

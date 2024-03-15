@@ -2,6 +2,7 @@ package nl.elec332.gradle.minecraft.moddev;
 
 import nl.elec332.gradle.minecraft.moddev.util.GradleInternalHelper;
 import nl.elec332.gradle.minecraft.moddev.util.ProjectHelper;
+import nl.elec332.gradle.minecraft.moddev.util.ProjectPluginInitializer;
 import nl.elec332.gradle.minecraft.moddev.util.RuntimeProjectPluginRequests;
 import org.gradle.api.Plugin;
 import org.gradle.api.Project;
@@ -200,6 +201,20 @@ public class SettingsPlugin implements Plugin<Settings> {
             }
             type.addPlugins(reg, propGetter);
         });
+        final Set<String> pluginCounter = new HashSet<>();
+        type.addPlugins((id, version) -> {
+            pluginCounter.add(id);
+            project.getPluginManager().withPlugin(id, p -> {
+                pluginCounter.remove(id);
+                if (pluginCounter.isEmpty()) {
+                    project.getPlugins().forEach(plugin -> {
+                        if (plugin instanceof ProjectPluginInitializer.Listener) {
+                            ((ProjectPluginInitializer.Listener) plugin).afterRuntimePluginsAdded(project);
+                        }
+                    });
+                }
+            });
+        }, propGetter);
         type.apply(project, mdd.superCommonMode);
     }
 

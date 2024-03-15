@@ -6,6 +6,7 @@ import nl.elec332.gradle.minecraft.moddev.tasks.CheckCompileTask;
 import nl.elec332.gradle.minecraft.moddev.util.ProjectHelper;
 import org.gradle.api.Project;
 import org.gradle.api.Task;
+import org.gradle.api.plugins.BasePlugin;
 import org.gradle.api.plugins.JavaPlugin;
 import org.gradle.api.tasks.Copy;
 import org.gradle.api.tasks.SourceSet;
@@ -26,7 +27,7 @@ public abstract class AbstractPluginMLSC extends AbstractPluginSC {
     protected final void applyPlugin(Project target, SourceSet main) {
         Project commonProject = SettingsPlugin.getDetails(target).getCommonProject();
         commonProject.afterEvaluate(p -> p.getConfigurations().getByName(COMMON_CONFIG_NAME).getDependencies().forEach(dep -> target.getDependencies().add(JavaPlugin.IMPLEMENTATION_CONFIGURATION_NAME, dep)));
-        SourceSet commonMain = ProjectHelper.getSourceSets(target).maybeCreate(SourceSet.MAIN_SOURCE_SET_NAME);
+        SourceSet commonMain = ProjectHelper.getSourceSets(commonProject).maybeCreate(SourceSet.MAIN_SOURCE_SET_NAME);
         target.beforeEvaluate(trgt -> trgt.getTasks().named(AbstractPlugin.CHECK_CLASSES_TASK, CheckCompileTask.class, t -> t.checkSource(commonMain)));
         target.getDependencies().add(JavaPlugin.COMPILE_ONLY_CONFIGURATION_NAME, commonProject);
         String classifier = target.getName();
@@ -38,13 +39,15 @@ public abstract class AbstractPluginMLSC extends AbstractPluginSC {
             t.from(main.getJava());
             t.dependsOn(pr);
         });
-        commonProject.getTasks().named(DEV_JAR_TASK_NAME, Jar.class, t -> t.from(main.getOutput()));
+        commonProject.getTasks().named(DEV_ALL_JAR_TASK_NAME, Jar.class, t -> t.from(main.getOutput()));
 
-        addToPublication(commonProject, target.getTasks().register(DEV_JAR_TASK_NAME, Jar.class, j -> {
+        var devTask = target.getTasks().register(DEV_JAR_TASK_NAME, Jar.class, j -> {
             j.getArchiveClassifier().set(classifier + "-dev");
             j.from(main.getOutput());
             j.getManifest().attributes(Map.of(MAPPINGS, ModLoader.Mapping.NAMED));
-        }));
+        });
+        addToPublication(commonProject, devTask);
+        target.getTasks().named(BasePlugin.ASSEMBLE_TASK_NAME, t -> t.dependsOn(devTask));
 
         var jarTask = target.getTasks().named(JavaPlugin.JAR_TASK_NAME, Jar.class, j -> {
             j.from(commonMain.getOutput());
@@ -53,22 +56,27 @@ public abstract class AbstractPluginMLSC extends AbstractPluginSC {
 
         var remapTask = target.getTasks().register(REMAPPED_JAR_TASK_NAME, t -> {
             var ret = setupRemapTask(target, t);
-            if (ret == null) {
-                //Either there is no remapping, or the remap task doesn't have outputs setup correctly (ForgeGradle)
-                ret = jarTask;
-            }
-            if (!ret.isPresent()) {
+            if (ret != null && !ret.isPresent()) {
                 throw new IllegalStateException();
             }
-            t.dependsOn(ret);
-            t.getInputs().files(ret.get().getOutputs().getFiles());
-            t.getOutputs().files(ret.get().getOutputs().getFiles());
+            Task dep;
+            if (ret == null) {
+                //Either there is no remapping, or the remap task doesn't have outputs setup correctly (ForgeGradle)
+                dep = jarTask.get();
+            } else {
+                //In case the remapping task doesn't have its inputs setup correctly
+                dep = ret.get();
+                dep.dependsOn(jarTask);
+            }
+            t.dependsOn(dep);
+            t.getInputs().files(dep.getOutputs().getFiles());
+            t.getOutputs().files(dep.getOutputs().getFiles());
         });
-
-        target.afterEvaluate(p -> p.afterEvaluate(p2 -> addToPublication(commonProject, remapTask.get().getOutputs().getFiles().getSingleFile(), a -> {
+        target.getTasks().named(BasePlugin.ASSEMBLE_TASK_NAME, t -> t.dependsOn(remapTask));
+        target.afterEvaluate(p -> addToPublication(commonProject, remapTask.get().getOutputs().getFiles().getSingleFile(), a -> {
             a.setClassifier(jarTask.get().getArchiveClassifier().get());
             a.builtBy(remapTask);
-        })));
+        }));
 
         SourceSet ss = ProjectHelper.getSourceSets(target).maybeCreate("runTarget");
         ss.getJava().setSrcDirs(Collections.emptyList());

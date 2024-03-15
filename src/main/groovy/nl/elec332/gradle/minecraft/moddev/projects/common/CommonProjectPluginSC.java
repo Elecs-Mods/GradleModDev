@@ -8,6 +8,7 @@ import nl.elec332.gradle.minecraft.moddev.util.ProjectHelper;
 import org.gradle.api.Project;
 import org.gradle.api.artifacts.Configuration;
 import org.gradle.api.file.DuplicatesStrategy;
+import org.gradle.api.plugins.BasePlugin;
 import org.gradle.api.plugins.JavaPlugin;
 import org.gradle.api.publish.maven.plugins.MavenPublishPlugin;
 import org.gradle.api.tasks.SourceSet;
@@ -39,17 +40,27 @@ public final class CommonProjectPluginSC extends AbstractPluginSC {
         importProperties(target);
 
         target.getTasks().named(JavaPlugin.JAR_TASK_NAME, Jar.class).configure(j -> {
-            j.getArchiveClassifier().set("common-dev");
-            j.getManifest().attributes(Map.of(MAPPINGS, ModLoader.Mapping.NAMED, "Implementation-Title", "common"));
+            j.getManifest().attributes(Map.of(MAPPINGS, ModLoader.Mapping.NAMED));
         });
         target.getTasks().named("sourcesJar", Jar.class, j -> j.filesMatching("/META-INF/mods.toml", c -> c.setDuplicatesStrategy(DuplicatesStrategy.EXCLUDE)));
+
         var devTask = target.getTasks().register(DEV_JAR_TASK_NAME, Jar.class, j -> {
-            j.getArchiveClassifier().set("dev");
+            j.getArchiveClassifier().set("common-dev");
+            j.from(main.getOutput());
+            j.getManifest().attributes(Map.of(MAPPINGS, ModLoader.Mapping.NAMED));
+        });
+        addToPublication(target, devTask);
+        target.getTasks().named(BasePlugin.ASSEMBLE_TASK_NAME, t -> t.dependsOn(devTask));
+
+        var devAllTask = target.getTasks().register(DEV_ALL_JAR_TASK_NAME, Jar.class, j -> {
+            j.getArchiveClassifier().set("all-dev");
             j.from(main.getOutput());
             j.filesMatching("/META-INF/mods.toml", c -> c.setDuplicatesStrategy(DuplicatesStrategy.EXCLUDE));
             j.getManifest().attributes(Map.of(MAPPINGS, ModLoader.Mapping.NAMED, "Implementation-Title", "all"));
         });
-        addToPublication(target, devTask);
+        addToPublication(target, devAllTask);
+        target.getTasks().named(BasePlugin.ASSEMBLE_TASK_NAME, t -> t.dependsOn(devAllTask));
+
         target.getArtifacts().add("archives", devTask);
         getModPublication(target).from(target.getComponents().getByName(GradleInternalHelper.JAVA_MAIN_COMPONENT_NAME));
     }

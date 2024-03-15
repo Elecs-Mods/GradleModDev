@@ -20,13 +20,14 @@ public abstract class FabricBasedPlugin<E extends FabricBasedExtension> extends 
 
     @Override
     protected void beforeProject(Project project) {
+        project.getTasks().withType(AbstractPublishToMaven.class, m -> m.dependsOn(REMAP_JAR_TASK));
     }
 
     @Override
-    protected void afterProject(Project project) {
+    public void afterRuntimePluginsAdded(Project project) {
         FabricBasedGroovyHelper.setRunDirs(project, getExtension(project));
         FabricBasedGroovyHelper.setRefMapName(project);
-        var td = project.getTasks().named(REMAP_JAR_TASK, Jar.class, j -> {
+        project.getTasks().named(REMAP_JAR_TASK, Jar.class, j -> {
             Jar jt = (Jar) project.getTasks().getByName(JavaPlugin.JAR_TASK_NAME);
             j.getArchiveBaseName().convention(jt.getArchiveBaseName());
             j.getArchiveAppendix().convention(jt.getArchiveAppendix());
@@ -34,7 +35,6 @@ public abstract class FabricBasedPlugin<E extends FabricBasedExtension> extends 
             j.getArchiveExtension().convention(jt.getArchiveExtension());
             j.getArchiveClassifier().convention(jt.getArchiveClassifier());
         });
-        project.getTasks().withType(AbstractPublishToMaven.class, m -> m.dependsOn(td));
     }
 
     @Override
