@@ -76,4 +76,18 @@ class ForgeGroovyHelper {
         })
     }
 
+    static void setMixinRunSettings(Project project) {
+        ProjectHelper.applyToProject(project, {
+            var output = createSrgToMcp.getOutput().get().getAsFile().path
+            minecraft {
+                runs {
+                    configureEach {
+                        property 'mixin.env.remapRefMap', 'true'
+                        property 'mixin.env.refMapRemappingFile', output
+                    }
+                }
+            }
+        })
+    }
+
 }

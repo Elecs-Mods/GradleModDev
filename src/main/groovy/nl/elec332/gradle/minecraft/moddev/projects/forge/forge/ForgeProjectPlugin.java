@@ -41,6 +41,7 @@ public class ForgeProjectPlugin extends ForgeBasedPlugin<ForgeExtension> {
 
     @Override
     protected void afterProject(Project project) {
+        ForgeGroovyHelper.setMixinRunSettings(project);
     }
 
     @Override
