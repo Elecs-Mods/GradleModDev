@@ -6,8 +6,11 @@ import nl.elec332.gradle.minecraft.moddev.projects.ModMetadata;
 import nl.elec332.gradle.minecraft.moddev.projects.forge.ForgeBasedPlugin;
 import nl.elec332.gradle.minecraft.moddev.util.ProjectHelper;
 import org.gradle.api.Project;
+import org.gradle.api.Task;
 import org.gradle.api.plugins.JavaPlugin;
 import org.gradle.api.publish.maven.tasks.AbstractPublishToMaven;
+import org.gradle.api.tasks.TaskProvider;
+import org.gradle.api.tasks.bundling.AbstractArchiveTask;
 import org.gradle.api.tasks.compile.JavaCompile;
 import org.gradle.jvm.tasks.Jar;
 
@@ -90,6 +93,12 @@ public class ForgeProjectPlugin extends ForgeBasedPlugin<ForgeExtension> {
             String dep = ProjectHelper.hasProperty(project, MLProperties.FORGE_VERSION_DEP) ? ProjectHelper.getStringProperty(project, MLProperties.FORGE_VERSION_DEP) : null;
             metadata.dependsOn("forge", dep != null ? dep : (">=" + version));
         }
+    }
+
+    @Override
+    protected TaskProvider<? extends AbstractArchiveTask> setupRemapTask(Project project, Task task, TaskProvider<Jar> jarTask) {
+        task.dependsOn(ForgeProjectPlugin.REMAP_JAR_TASK);
+        return jarTask;
     }
 
     @Override

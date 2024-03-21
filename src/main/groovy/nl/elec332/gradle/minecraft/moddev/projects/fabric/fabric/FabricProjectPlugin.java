@@ -21,6 +21,7 @@ public class FabricProjectPlugin extends FabricBasedPlugin<FabricExtension> {
 
     @Override
     protected void afterProject(Project project) {
+        super.afterProject(project);
         boolean api = getExtension(project).addApiDependency;
         if (api && !ProjectHelper.hasProperty(project, MLProperties.FABRIC_VERSION)) {
             throw new RuntimeException("Missing property: " + MLProperties.FABRIC_VERSION);

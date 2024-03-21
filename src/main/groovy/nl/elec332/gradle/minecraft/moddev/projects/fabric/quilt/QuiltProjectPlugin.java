@@ -21,6 +21,7 @@ public class QuiltProjectPlugin extends FabricBasedPlugin<QuiltExtension> {
 
     @Override
     protected void afterProject(Project project) {
+        super.afterProject(project);
         boolean api = getExtension(project).addApiDependency;
         if (api && !ProjectHelper.hasProperty(project, MLProperties.QUILT_VERSION)) {
             throw new RuntimeException("Missing property: " + MLProperties.QUILT_VERSION);

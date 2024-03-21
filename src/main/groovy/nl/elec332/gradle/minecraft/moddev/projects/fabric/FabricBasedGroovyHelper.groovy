@@ -10,7 +10,7 @@ import org.gradle.api.Project
  */
 class FabricBasedGroovyHelper {
 
-    static void setRunDirs(Project project, CommonMLExtension extension) {
+    static void setRunSettings(Project project, CommonMLExtension extension) {
         ProjectHelper.applyToProject(project, {
             loom {
                 runs {

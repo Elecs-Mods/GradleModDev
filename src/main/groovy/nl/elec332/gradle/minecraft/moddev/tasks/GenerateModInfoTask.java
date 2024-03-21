@@ -15,7 +15,7 @@ import java.io.File;
 /**
  * Created by Elec332 on 12-03-2024
  */
-public abstract class GenerateModInfo extends DefaultTask {
+public abstract class GenerateModInfoTask extends DefaultTask {
 
     private String source = SourceSet.MAIN_SOURCE_SET_NAME;
 

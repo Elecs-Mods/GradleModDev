@@ -10,7 +10,7 @@ import java.io.File;
 /**
  * Created by Elec332 on 08-02-2024
  */
-public class CheckCompileTask extends JavaCompile {
+public abstract class CheckCompileTask extends JavaCompile {
 
     public CheckCompileTask() {
         JavaCompile main = (JavaCompile) getProject().getTasks().getByName(JavaPlugin.COMPILE_JAVA_TASK_NAME);

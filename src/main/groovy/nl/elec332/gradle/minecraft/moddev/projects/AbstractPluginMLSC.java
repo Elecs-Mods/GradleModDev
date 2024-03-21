@@ -5,12 +5,10 @@ import nl.elec332.gradle.minecraft.moddev.SettingsPlugin;
 import nl.elec332.gradle.minecraft.moddev.tasks.CheckCompileTask;
 import nl.elec332.gradle.minecraft.moddev.util.ProjectHelper;
 import org.gradle.api.Project;
-import org.gradle.api.Task;
 import org.gradle.api.plugins.BasePlugin;
 import org.gradle.api.plugins.JavaPlugin;
 import org.gradle.api.tasks.Copy;
 import org.gradle.api.tasks.SourceSet;
-import org.gradle.api.tasks.TaskProvider;
 import org.gradle.api.tasks.javadoc.Javadoc;
 import org.gradle.jvm.tasks.Jar;
 
@@ -49,34 +47,12 @@ public abstract class AbstractPluginMLSC extends AbstractPluginSC {
         addToPublication(commonProject, devTask);
         target.getTasks().named(BasePlugin.ASSEMBLE_TASK_NAME, t -> t.dependsOn(devTask));
 
-        var jarTask = target.getTasks().named(JavaPlugin.JAR_TASK_NAME, Jar.class, j -> {
+        target.getTasks().named(JavaPlugin.JAR_TASK_NAME, Jar.class, j -> {
             j.from(commonMain.getOutput());
             j.getManifest().attributes(Map.of(MAPPINGS, Objects.requireNonNull(Objects.requireNonNull(ProjectHelper.getPlugin(target).getProjectType().getModLoader()).getMapping())));
         });
 
-        var remapTask = target.getTasks().register(REMAPPED_JAR_TASK_NAME, t -> {
-            var ret = setupRemapTask(target, t);
-            if (ret != null && !ret.isPresent()) {
-                throw new IllegalStateException();
-            }
-            Task dep;
-            if (ret == null) {
-                //Either there is no remapping, or the remap task doesn't have outputs setup correctly (ForgeGradle)
-                dep = jarTask.get();
-            } else {
-                //In case the remapping task doesn't have its inputs setup correctly
-                dep = ret.get();
-                dep.dependsOn(jarTask);
-            }
-            t.dependsOn(dep);
-            t.getInputs().files(dep.getOutputs().getFiles());
-            t.getOutputs().files(dep.getOutputs().getFiles());
-        });
-        target.getTasks().named(BasePlugin.ASSEMBLE_TASK_NAME, t -> t.dependsOn(remapTask));
-        target.afterEvaluate(p -> addToPublication(commonProject, remapTask.get().getOutputs().getFiles().getSingleFile(), a -> {
-            a.setClassifier(jarTask.get().getArchiveClassifier().get());
-            a.builtBy(remapTask);
-        }));
+        target.afterEvaluate(p -> addToPublication(commonProject, target.getTasks().named(AbstractPlugin.REMAPPED_JAR_TASK_NAME)));
 
         SourceSet ss = ProjectHelper.getSourceSets(target).maybeCreate("runTarget");
         ss.getJava().setSrcDirs(Collections.emptyList());
@@ -96,9 +72,5 @@ public abstract class AbstractPluginMLSC extends AbstractPluginSC {
     }
 
     protected abstract void applyMLPlugin(Project target, SourceSet main, SourceSet run, SourceSet commonMain);
-
-    protected TaskProvider<? extends Task> setupRemapTask(Project project, Task task) {
-        return null;
-    }
 
 }

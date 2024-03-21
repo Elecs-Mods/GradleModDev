@@ -22,6 +22,7 @@ import org.gradle.api.Project;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.HashSet;
+import java.util.Objects;
 import java.util.Set;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
@@ -47,7 +48,7 @@ public enum ProjectType implements ProjectPluginInitializer {
             this.name = loader.getName();
             this.loader = loader;
         } else {
-            this.name = name;
+            this.name = Objects.requireNonNull(name);
             this.loader = null;
         }
         this.plugin = plugin;

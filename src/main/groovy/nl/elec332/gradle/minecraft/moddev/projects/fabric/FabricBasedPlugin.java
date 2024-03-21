@@ -2,9 +2,13 @@ package nl.elec332.gradle.minecraft.moddev.projects.fabric;
 
 import nl.elec332.gradle.minecraft.moddev.ProjectType;
 import nl.elec332.gradle.minecraft.moddev.projects.AbstractPlugin;
+import nl.elec332.gradle.minecraft.moddev.util.ProjectHelper;
 import org.gradle.api.Project;
+import org.gradle.api.Task;
 import org.gradle.api.plugins.JavaPlugin;
 import org.gradle.api.publish.maven.tasks.AbstractPublishToMaven;
+import org.gradle.api.tasks.TaskProvider;
+import org.gradle.api.tasks.bundling.AbstractArchiveTask;
 import org.gradle.jvm.tasks.Jar;
 
 /**
@@ -25,20 +29,25 @@ public abstract class FabricBasedPlugin<E extends FabricBasedExtension> extends 
 
     @Override
     public void afterRuntimePluginsAdded(Project project) {
-        FabricBasedGroovyHelper.setRunDirs(project, getExtension(project));
         FabricBasedGroovyHelper.setRefMapName(project);
         project.getTasks().named(REMAP_JAR_TASK, Jar.class, j -> {
             Jar jt = (Jar) project.getTasks().getByName(JavaPlugin.JAR_TASK_NAME);
-            j.getArchiveBaseName().convention(jt.getArchiveBaseName());
-            j.getArchiveAppendix().convention(jt.getArchiveAppendix());
-            j.getArchiveVersion().convention(jt.getArchiveVersion());
-            j.getArchiveExtension().convention(jt.getArchiveExtension());
-            j.getArchiveClassifier().convention(jt.getArchiveClassifier());
+            ProjectHelper.copyNameTo(jt, j);
         });
     }
 
     @Override
+    protected void afterProject(Project project) {
+        FabricBasedGroovyHelper.setRunSettings(project, getExtension(project));
+    }
+
+    @Override
     protected void addMixinDependencies(Project project) {
+    }
+
+    @Override
+    protected TaskProvider<? extends AbstractArchiveTask> setupRemapTask(Project project, Task task, TaskProvider<Jar> jarTask) {
+        return project.getTasks().named(FabricBasedPlugin.REMAP_JAR_TASK, Jar.class);
     }
 
     protected static String getApiVersion(String s) {

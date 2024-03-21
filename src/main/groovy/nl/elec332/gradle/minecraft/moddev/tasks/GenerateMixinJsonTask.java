@@ -17,7 +17,7 @@ import java.util.*;
 /**
  * Created by Elec332 on 12-03-2024
  */
-public class GenerateMixinJson extends DefaultTask {
+public abstract class GenerateMixinJsonTask extends DefaultTask {
 
     private int counter = 1;
     private String source = SourceSet.MAIN_SOURCE_SET_NAME;
@@ -35,7 +35,7 @@ public class GenerateMixinJson extends DefaultTask {
 
     @Input
     public Map<String, CommonExtension.Mixin> getMixins() {
-        return Collections.unmodifiableMap(mixins);
+        return mixins == null ? Collections.emptyMap() : Collections.unmodifiableMap(mixins);
     }
 
     @Internal
@@ -75,14 +75,16 @@ public class GenerateMixinJson extends DefaultTask {
 
     @TaskAction
     private void run() {
-        if (mixins == null) {
-            throw new RuntimeException("Gradle fucked up");
-        }
         File rootDir = AllProjectsPlugin.generatedResourceFolder(getProject()).dir(source).getAsFile();
-        for (File f : Objects.requireNonNull(rootDir.listFiles())) {
-            if (f.isFile() && f.getName().endsWith(".mixins.json")) {
-                f.delete();
+        if (rootDir.exists()) {
+            for (File f : Objects.requireNonNull(rootDir.listFiles())) {
+                if (f.isFile() && f.getName().endsWith(".mixins.json")) {
+                    f.delete();
+                }
             }
+        }
+        if (mixins == null) {
+            return;
         }
         for (var e : mixins.entrySet()) {
             AbstractGroovyHelper.writeFile(new File(rootDir, e.getKey()), Objects.requireNonNull(e.getValue().toJson(null, getProject())));

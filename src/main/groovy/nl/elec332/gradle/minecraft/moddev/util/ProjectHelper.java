@@ -8,6 +8,7 @@ import org.gradle.api.Action;
 import org.gradle.api.Project;
 import org.gradle.api.plugins.JavaPluginExtension;
 import org.gradle.api.tasks.SourceSetContainer;
+import org.gradle.api.tasks.bundling.AbstractArchiveTask;
 
 import java.util.HashSet;
 import java.util.Objects;
@@ -17,6 +18,15 @@ import java.util.Set;
  * Created by Elec332 on 03-09-2023
  */
 public class ProjectHelper {
+
+    public static void copyNameTo(AbstractArchiveTask from, AbstractArchiveTask to) {
+        to.getArchiveBaseName().convention(from.getArchiveBaseName());
+        to.getArchiveAppendix().convention(from.getArchiveAppendix());
+        to.getArchiveVersion().convention(from.getArchiveVersion());
+        to.getArchiveClassifier().convention(from.getArchiveClassifier());
+
+        to.getArchiveExtension().set(from.getArchiveExtension());
+    }
 
     public static SourceSetContainer getSourceSets(Project root) {
         return Objects.requireNonNull(root.getExtensions().getByType(JavaPluginExtension.class).getSourceSets());
@@ -53,7 +63,7 @@ public class ProjectHelper {
 
     public static String getMixinRefMap(Project project) {
         String fileNameBase = ProjectHelper.getPlugin(project).getProjectType().getName() + ".refmap.json";
-        return ProjectHelper.getProperty(project, MLProperties.MOD_ID) + fileNameBase;
+        return ProjectHelper.getProperty(project, MLProperties.MOD_ID) + "." + fileNameBase;
     }
 
     public static AbstractPlugin<?> getPlugin(Project project) {

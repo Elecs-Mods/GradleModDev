@@ -1,17 +1,16 @@
 package nl.elec332.gradle.minecraft.moddev.projects;
 
-import nl.elec332.gradle.minecraft.moddev.AllProjectsPlugin;
-import nl.elec332.gradle.minecraft.moddev.MLProperties;
-import nl.elec332.gradle.minecraft.moddev.ProjectType;
-import nl.elec332.gradle.minecraft.moddev.SettingsPlugin;
+import nl.elec332.gradle.minecraft.moddev.*;
 import nl.elec332.gradle.minecraft.moddev.tasks.CheckCompileTask;
-import nl.elec332.gradle.minecraft.moddev.tasks.GenerateMixinJson;
-import nl.elec332.gradle.minecraft.moddev.tasks.GenerateModInfo;
+import nl.elec332.gradle.minecraft.moddev.tasks.GenerateMixinJsonTask;
+import nl.elec332.gradle.minecraft.moddev.tasks.GenerateModInfoTask;
+import nl.elec332.gradle.minecraft.moddev.tasks.RemapJarTask;
 import nl.elec332.gradle.minecraft.moddev.util.ProjectHelper;
 import nl.elec332.gradle.minecraft.moddev.util.ProjectPluginInitializer;
 import org.gradle.api.Plugin;
 import org.gradle.api.Project;
 import org.gradle.api.Task;
+import org.gradle.api.plugins.BasePlugin;
 import org.gradle.api.plugins.BasePluginExtension;
 import org.gradle.api.plugins.JavaPlugin;
 import org.gradle.api.publish.tasks.GenerateModuleMetadata;
@@ -19,6 +18,8 @@ import org.gradle.api.specs.Spec;
 import org.gradle.api.tasks.SourceSet;
 import org.gradle.api.tasks.TaskContainer;
 import org.gradle.api.tasks.TaskInputs;
+import org.gradle.api.tasks.TaskProvider;
+import org.gradle.api.tasks.bundling.AbstractArchiveTask;
 import org.gradle.api.tasks.compile.JavaCompile;
 import org.gradle.api.tasks.javadoc.Javadoc;
 import org.gradle.jvm.tasks.Jar;
@@ -49,6 +50,7 @@ public abstract class AbstractPlugin<E extends CommonExtension> implements Plugi
     public static String GENERATE_MODINFO_TASK = "generateModInfo";
     public static String CHECK_CLASSES_TASK = "checkClasses";
     public static String GENERATE_METADATA = "generateMetadata";
+    protected static final String REMAPPED_JAR_TASK_NAME = "remappedJar";
 
     private final ProjectType projectType;
 
@@ -71,8 +73,8 @@ public abstract class AbstractPlugin<E extends CommonExtension> implements Plugi
         tasks.register(CHECK_CLASSES_TASK, CheckCompileTask.class);
         tasks.named(JavaPlugin.CLASSES_TASK_NAME, it -> it.dependsOn(CHECK_CLASSES_TASK));
         tasks.register(GENERATE_METADATA).configure(gm -> {
-            tasks.withType(GenerateMixinJson.class).forEach(gm::dependsOn);
-            tasks.withType(GenerateModInfo.class).forEach(gm::dependsOn);
+            tasks.withType(GenerateMixinJsonTask.class).forEach(gm::dependsOn);
+            tasks.withType(GenerateModInfoTask.class).forEach(gm::dependsOn);
         });
 
         tasks.withType(JavaCompile.class).configureEach(t -> t.dependsOn(GENERATE_METADATA));
@@ -80,8 +82,8 @@ public abstract class AbstractPlugin<E extends CommonExtension> implements Plugi
         tasks.withType(ProcessResources.class).configureEach(t -> t.dependsOn(GENERATE_METADATA));
 
         if (!isCommon) {
-            tasks.create(GENERATE_MIXIN_TASK, GenerateMixinJson.class);
-            tasks.create(GENERATE_MODINFO_TASK, GenerateModInfo.class).onlyIf(t -> cfg.generateModInfo());
+            tasks.create(GENERATE_MIXIN_TASK, GenerateMixinJsonTask.class);
+            tasks.create(GENERATE_MODINFO_TASK, GenerateModInfoTask.class).onlyIf(t -> cfg.generateModInfo());
         } else {
             extension.metadata(md -> {
                 String id = ProjectHelper.getStringProperty(target, MLProperties.MOD_ID);
@@ -96,9 +98,19 @@ public abstract class AbstractPlugin<E extends CommonExtension> implements Plugi
             });
         }
 
-        tasks.withType(GenerateModInfo.class).configureEach(gm -> tasks.withType(GenerateMixinJson.class).forEach(gm::dependsOn));
+        tasks.withType(GenerateModInfoTask.class).configureEach(gm -> tasks.withType(GenerateMixinJsonTask.class).forEach(gm::dependsOn));
 
-        tasks.named(JavaPlugin.JAR_TASK_NAME, Jar.class, j -> j.getArchiveClassifier().set(getArchiveClassifier()));
+        var jarTask = tasks.named(JavaPlugin.JAR_TASK_NAME, Jar.class, j -> j.getArchiveClassifier().set(getArchiveClassifier()));
+        var remapTask = target.getTasks().register(REMAPPED_JAR_TASK_NAME, RemapJarTask.class, t -> {
+            var ret = setupRemapTask(target, t, jarTask);
+            if (ret != null && !ret.isPresent()) {
+                throw new IllegalStateException();
+            }
+            t.setup(ret == null ? jarTask.get() : ret.get());
+            t.getMapping().set(Optional.ofNullable(getProjectType().getModLoader()).map(ModLoader::getMapping).orElse(ModLoader.Mapping.NAMED));
+        });
+        target.getTasks().named(BasePlugin.ASSEMBLE_TASK_NAME, t -> t.dependsOn(remapTask));
+
         tasks.withType(Jar.class).configureEach(jar -> jar.manifest(manifest -> manifest.attributes(Map.of(
                 "Specification-Title", ProjectHelper.getStringProperty(target, MLProperties.MOD_ID),
                 "Specification-Vendor", ProjectHelper.getStringProperty(target, MLProperties.MOD_AUTHORS),
@@ -125,7 +137,7 @@ public abstract class AbstractPlugin<E extends CommonExtension> implements Plugi
                 p.getTasks().withType(GenerateModuleMetadata.class).configureEach(meta -> meta.setEnabled(false));
             }
 
-            p.getTasks().withType(GenerateMixinJson.class).forEach(j -> j.addMixins(extension.getMixins()));
+            p.getTasks().withType(GenerateMixinJsonTask.class).forEach(j -> j.addMixins(extension.getMixins()));
             if (extension instanceof CommonMLExtension) {
                 ModMetadata md;
                 if (!cfg.singleProject()) {
@@ -140,17 +152,17 @@ public abstract class AbstractPlugin<E extends CommonExtension> implements Plugi
                         importCommonProject(p, common, (CommonMLExtension) extension);
                     }
                     if (((CommonMLExtension) extension).addCommonMixins) {
-                        p.getTasks().withType(GenerateMixinJson.class).forEach(j -> j.addMixins(commonExtension.getMixins()));
+                        p.getTasks().withType(GenerateMixinJsonTask.class).forEach(j -> j.addMixins(commonExtension.getMixins()));
                     }
                 } else {
                     md = ModMetadataImpl.generate(p, extension.getMetaModifiers());
                 }
-                p.getTasks().withType(GenerateMixinJson.class).forEach(j -> j.getMetaMixinFiles().forEach(md::mixin));
+                p.getTasks().withType(GenerateMixinJsonTask.class).forEach(j -> j.getMetaMixinFiles().forEach(md::mixin));
                 if (md.getMixins() != null) {
                     addMixinDependencies(p);
                 }
                 checkModMetadata(p, md);
-                p.getTasks().withType(GenerateModInfo.class).configureEach(pr -> pr.getMetaData().set(md));
+                p.getTasks().withType(GenerateModInfoTask.class).configureEach(pr -> pr.getMetaData().set(md));
                 for (Project dp : ((CommonMLExtension) extension).getMetaImports()) {
                     if (dp == null || dp == p) {
                         continue;
@@ -170,7 +182,7 @@ public abstract class AbstractPlugin<E extends CommonExtension> implements Plugi
     }
 
     private void importModMeta(Project from, Project to) {
-        from.getTasks().withType(GenerateModInfo.class).configureEach(pr -> to.getTasks().withType(GenerateModInfo.class).configureEach(pr2 -> pr2.getMetaData().get().importFrom(pr.getMetaData().get())));
+        from.getTasks().withType(GenerateModInfoTask.class).configureEach(pr -> to.getTasks().withType(GenerateModInfoTask.class).configureEach(pr2 -> pr2.getMetaData().get().importFrom(pr.getMetaData().get())));
     }
 
     public final ProjectType getProjectType() {
@@ -199,6 +211,10 @@ public abstract class AbstractPlugin<E extends CommonExtension> implements Plugi
     }
 
     protected abstract Class<E> extensionType();
+
+    protected TaskProvider<? extends AbstractArchiveTask> setupRemapTask(Project project, Task task, TaskProvider<Jar> jarTask) {
+        return null;
+    }
 
     private static void importCommonProject(Project root, Project common, CommonMLExtension extension) {
         root.getDependencies().add(JavaPlugin.COMPILE_ONLY_CONFIGURATION_NAME, common);
