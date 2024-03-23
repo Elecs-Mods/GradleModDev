@@ -47,6 +47,13 @@ public class MLProperties {
 
     public static final Set<String> ALL_PROPS;
 
+    public static class Sub {
+
+        public static final String MOD_VERSION_CLASSIFIER = "mod_version_classifier";
+        public static final String MOD_BUILD_NUMBER = "mod_build_number";
+
+    }
+
     static {
         Set<String> props = new HashSet<>();
         try {

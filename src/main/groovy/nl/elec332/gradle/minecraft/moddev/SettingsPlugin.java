@@ -37,6 +37,8 @@ public class SettingsPlugin implements Plugin<Settings> {
 
         public boolean multiProject = true;
 
+        public boolean useBuildNumber = false;
+
         private final Set<ProjectType> loaders = new HashSet<>();
 
         public void enableVanilla() {
@@ -73,6 +75,7 @@ public class SettingsPlugin implements Plugin<Settings> {
         private final Map<ProjectType, Project> projects = new HashMap<>();
         private boolean generateModInfo = true;
         private boolean superCommonMode = false;
+        private boolean useBuildNumber = false;
 
         @NotNull
         public Project getCommonProject() {
@@ -92,6 +95,10 @@ public class SettingsPlugin implements Plugin<Settings> {
 
         public boolean isSuperCommonMode() {
             return superCommonMode;
+        }
+
+        public boolean useBuildNumber() {
+            return useBuildNumber;
         }
 
         @Nullable
@@ -176,6 +183,7 @@ public class SettingsPlugin implements Plugin<Settings> {
             }
             mdd.generateModInfo = cfg.generateModInfo;
             mdd.superCommonMode = cfg.superCommonMode;
+            mdd.useBuildNumber = cfg.useBuildNumber;
         });
 
         settings.getRootProject().setName((String) Objects.requireNonNull(settings.getExtensions().getExtraProperties().get(MLProperties.MOD_NAME)));

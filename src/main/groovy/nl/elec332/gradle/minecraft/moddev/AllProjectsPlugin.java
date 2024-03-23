@@ -1,6 +1,7 @@
 package nl.elec332.gradle.minecraft.moddev;
 
 import nl.elec332.gradle.minecraft.moddev.util.GradleInternalHelper;
+import nl.elec332.gradle.minecraft.moddev.util.ProjectHelper;
 import org.gradle.api.JavaVersion;
 import org.gradle.api.Plugin;
 import org.gradle.api.Project;
@@ -74,6 +75,7 @@ public class AllProjectsPlugin implements Plugin<Project> {
                 }
             });
         });
+        checkSubProperties(target);
     }
 
     public static Directory generatedResourceFolder(Project target) {
@@ -82,6 +84,35 @@ public class AllProjectsPlugin implements Plugin<Project> {
 
     private void configureSourceSet(Project project, SourceSet sourceSet) {
         sourceSet.getResources().srcDir(generatedResourceFolder(project).dir(sourceSet.getName()));
+    }
+
+    private static void checkSubProperties(Project target) {
+        ExtraPropertiesExtension properties = target.getExtensions().getExtraProperties();
+        String versionClassifier = "";
+        if (properties.has(MLProperties.Sub.MOD_VERSION_CLASSIFIER)) {
+            String str = (String) properties.get(MLProperties.Sub.MOD_VERSION_CLASSIFIER);
+            if (str == null || str.isEmpty()) {
+                versionClassifier = "";
+            } else {
+                versionClassifier = "-" + str;
+            }
+        }
+        properties.set(MLProperties.Sub.MOD_VERSION_CLASSIFIER, versionClassifier);
+
+        String build = System.getenv("BUILD_NUMBER");
+        build = (build == null || build.isEmpty()) ? "9999-custom" : build;
+        properties.set(MLProperties.Sub.MOD_BUILD_NUMBER, build);
+
+        if (!ProjectHelper.hasProperty(target, MLProperties.MOD_VERSION)) {
+            return;
+        }
+
+        String version = ProjectHelper.getStringProperty(target, MLProperties.MOD_VERSION);
+        if (SettingsPlugin.getDetails(target).useBuildNumber()) {
+            version += "." + ProjectHelper.getStringProperty(target, MLProperties.Sub.MOD_BUILD_NUMBER);
+        }
+        version += ProjectHelper.getStringProperty(target, MLProperties.Sub.MOD_VERSION_CLASSIFIER);
+        properties.set(MLProperties.MOD_VERSION, version);
     }
 
 }
