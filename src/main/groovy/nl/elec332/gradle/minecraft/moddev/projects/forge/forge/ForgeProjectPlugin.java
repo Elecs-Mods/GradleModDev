@@ -4,6 +4,7 @@ import nl.elec332.gradle.minecraft.moddev.MLProperties;
 import nl.elec332.gradle.minecraft.moddev.ProjectType;
 import nl.elec332.gradle.minecraft.moddev.projects.ModMetadata;
 import nl.elec332.gradle.minecraft.moddev.projects.forge.ForgeBasedPlugin;
+import nl.elec332.gradle.minecraft.moddev.util.J8Helper;
 import nl.elec332.gradle.minecraft.moddev.util.ProjectHelper;
 import org.gradle.api.Project;
 import org.gradle.api.Task;
@@ -15,8 +16,7 @@ import org.gradle.api.tasks.compile.JavaCompile;
 import org.gradle.jvm.tasks.Jar;
 
 import java.io.File;
-import java.util.List;
-import java.util.Map;
+import java.util.Collections;
 import java.util.function.Consumer;
 
 /**
@@ -61,7 +61,7 @@ public class ForgeProjectPlugin extends ForgeBasedPlugin<ForgeExtension> {
         project.afterEvaluate(p -> ProjectHelper.getSourceSets(p).forEach(ss -> p.getTasks().named(ss.getCompileJavaTaskName(), JavaCompile.class, c -> {
             c.dependsOn("createMcpToSrg");
             File destDir = c.getDestinationDirectory().getAsFile().get();
-            c.getOptions().getCompilerArgs().addAll(List.of(
+            c.getOptions().getCompilerArgs().addAll(J8Helper.listOf(
                     "-AreobfTsrgFile=" + p.getLayout().getBuildDirectory().file("createMcpToSrg/output.tsrg").get().getAsFile().getPath(),
                     "-AoutRefMapFile=" + new File(destDir, ProjectHelper.getMixinRefMap(project)).getPath(),
                     "-AmappingTypes=tsrg",
@@ -74,7 +74,7 @@ public class ForgeProjectPlugin extends ForgeBasedPlugin<ForgeExtension> {
     protected void checkModMetadata(Project project, ModMetadata metadata) {
         if (metadata.getMixins() != null && getExtension(project).addMixinsToManifest) {
             project.getTasks().withType(Jar.class, jar -> {
-                jar.manifest(manifest -> manifest.attributes(Map.of(
+                jar.manifest(manifest -> manifest.attributes(Collections.singletonMap(
                         "MixinConfigs", String.join(",", metadata.getMixins())
                 )));
             });

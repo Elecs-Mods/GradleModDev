@@ -6,6 +6,7 @@ import nl.elec332.gradle.minecraft.moddev.projects.AbstractGroovyHelper;
 import nl.elec332.gradle.minecraft.moddev.projects.CommonExtension;
 import nl.elec332.gradle.minecraft.moddev.util.ProjectHelper;
 import org.gradle.api.DefaultTask;
+import org.gradle.api.file.Directory;
 import org.gradle.api.tasks.Input;
 import org.gradle.api.tasks.Internal;
 import org.gradle.api.tasks.SourceSet;
@@ -55,8 +56,8 @@ public abstract class GenerateMixinJsonTask extends DefaultTask {
             pubs = new HashSet<>(metaMixinFiles);
         }
         String fileNameBase = "." + ProjectHelper.getPlugin(getProject()).getProjectType().getName() + ".mixins.json";
-        var rd = AllProjectsPlugin.generatedResourceFolder(getProject()).dir(source);
-        for (var m : nm) {
+        Directory rd = AllProjectsPlugin.generatedResourceFolder(getProject()).dir(source);
+        for (CommonExtension.Mixin m : nm) {
             String file;
             if (counter == 1) {
                 file = ProjectHelper.getStringProperty(getProject(), MLProperties.MOD_ID) + fileNameBase;
@@ -86,7 +87,7 @@ public abstract class GenerateMixinJsonTask extends DefaultTask {
         if (mixins == null) {
             return;
         }
-        for (var e : mixins.entrySet()) {
+        for (Map.Entry<String, CommonExtension.Mixin> e : mixins.entrySet()) {
             AbstractGroovyHelper.writeFile(new File(rootDir, e.getKey()), Objects.requireNonNull(e.getValue().toJson(null, getProject())));
         }
     }

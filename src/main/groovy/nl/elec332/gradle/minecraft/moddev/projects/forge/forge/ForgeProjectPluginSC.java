@@ -8,11 +8,13 @@ import nl.elec332.gradle.minecraft.moddev.projects.CommonExtension;
 import nl.elec332.gradle.minecraft.moddev.projects.CommonMLExtension;
 import nl.elec332.gradle.minecraft.moddev.util.ProjectHelper;
 import org.gradle.api.Project;
+import org.gradle.api.file.Directory;
 import org.gradle.api.plugins.JavaPlugin;
+import org.gradle.api.provider.Provider;
 import org.gradle.api.tasks.SourceSet;
 import org.gradle.jvm.tasks.Jar;
 
-import java.util.Map;
+import java.util.Collections;
 
 /**
  * Created by Elec332 on 23-02-2024
@@ -34,8 +36,8 @@ public class ForgeProjectPluginSC extends AbstractPluginMLSC {
                 }
             });
         });
-        SettingsPlugin.getDetails(target).getCommonProject().getTasks().named(JavaPlugin.JAR_TASK_NAME, Jar.class, j -> j.getManifest().attributes(Map.of("FMLModType", "GAMELIBRARY")));
-        var dest = target.getLayout().getBuildDirectory().dir("sourcesSets/" + run.getName());
+        SettingsPlugin.getDetails(target).getCommonProject().getTasks().named(JavaPlugin.JAR_TASK_NAME, Jar.class, j -> j.getManifest().attributes(Collections.singletonMap("FMLModType", "GAMELIBRARY")));
+        Provider<Directory> dest = target.getLayout().getBuildDirectory().dir("sourcesSets/" + run.getName());
         run.getOutput().setResourcesDir(dest);
         run.getJava().getDestinationDirectory().set(dest);
     }

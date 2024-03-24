@@ -5,6 +5,7 @@ import nl.elec332.gradle.minecraft.moddev.tasks.CheckCompileTask;
 import nl.elec332.gradle.minecraft.moddev.tasks.GenerateMixinJsonTask;
 import nl.elec332.gradle.minecraft.moddev.tasks.GenerateModInfoTask;
 import nl.elec332.gradle.minecraft.moddev.tasks.RemapJarTask;
+import nl.elec332.gradle.minecraft.moddev.util.J8Helper;
 import nl.elec332.gradle.minecraft.moddev.util.ProjectHelper;
 import nl.elec332.gradle.minecraft.moddev.util.ProjectPluginInitializer;
 import org.gradle.api.Plugin;
@@ -58,7 +59,7 @@ public abstract class AbstractPlugin<E extends CommonExtension> implements Plugi
     public final void apply(@NotNull Project target) {
         SettingsPlugin.ModDevDetails cfg = SettingsPlugin.getDetails(target);
 
-        Set<String> projectProps = new HashSet<>(Set.of(MLProperties.MC_VERSION, MLProperties.MOD_VERSION, MLProperties.MOD_ID, MLProperties.MOD_GROUP_ID, MLProperties.MOD_NAME, MLProperties.MOD_AUTHORS, MLProperties.MOD_LICENSE, MLProperties.MOD_DESCRIPTION));
+        Set<String> projectProps = new HashSet<>(J8Helper.listOf(MLProperties.MC_VERSION, MLProperties.MOD_VERSION, MLProperties.MOD_ID, MLProperties.MOD_GROUP_ID, MLProperties.MOD_NAME, MLProperties.MOD_AUTHORS, MLProperties.MOD_LICENSE, MLProperties.MOD_DESCRIPTION));
         addProperties(projectProps::add);
         E extension = target.getExtensions().create(extensionType(), "modloader", extensionType());
         boolean isCommon = getProjectType() == ProjectType.COMMON;
@@ -90,7 +91,7 @@ public abstract class AbstractPlugin<E extends CommonExtension> implements Plugi
                 md.mod(id, mi -> {
                     mi.modVersion(ProjectHelper.getStringProperty(target, MLProperties.MOD_VERSION));
                     mi.modName(ProjectHelper.getStringProperty(target, MLProperties.MOD_NAME));
-                    mi.setAuthors(List.of(ProjectHelper.getStringProperty(target, MLProperties.MOD_AUTHORS).split(",")));
+                    mi.setAuthors(J8Helper.listOf(ProjectHelper.getStringProperty(target, MLProperties.MOD_AUTHORS).split(",")));
                     mi.modDescription(ProjectHelper.getStringProperty(target, MLProperties.MOD_DESCRIPTION));
                 });
                 md.modGroupId(ProjectHelper.getStringProperty(target, MLProperties.MOD_GROUP_ID));
@@ -100,9 +101,9 @@ public abstract class AbstractPlugin<E extends CommonExtension> implements Plugi
 
         tasks.withType(GenerateModInfoTask.class).configureEach(gm -> tasks.withType(GenerateMixinJsonTask.class).forEach(gm::dependsOn));
 
-        var jarTask = tasks.named(JavaPlugin.JAR_TASK_NAME, Jar.class, j -> j.getArchiveClassifier().set(getArchiveClassifier()));
-        var remapTask = target.getTasks().register(REMAPPED_JAR_TASK_NAME, RemapJarTask.class, t -> {
-            var ret = setupRemapTask(target, t, jarTask);
+        TaskProvider<Jar> jarTask = tasks.named(JavaPlugin.JAR_TASK_NAME, Jar.class, j -> j.getArchiveClassifier().set(getArchiveClassifier()));
+        TaskProvider<RemapJarTask> remapTask = target.getTasks().register(REMAPPED_JAR_TASK_NAME, RemapJarTask.class, t -> {
+            TaskProvider<? extends AbstractArchiveTask> ret = setupRemapTask(target, t, jarTask);
             if (ret != null && !ret.isPresent()) {
                 throw new IllegalStateException();
             }
@@ -111,14 +112,14 @@ public abstract class AbstractPlugin<E extends CommonExtension> implements Plugi
         });
         target.getTasks().named(BasePlugin.ASSEMBLE_TASK_NAME, t -> t.dependsOn(remapTask));
 
-        tasks.withType(Jar.class).configureEach(jar -> jar.manifest(manifest -> manifest.attributes(Map.of(
-                "Specification-Title", ProjectHelper.getStringProperty(target, MLProperties.MOD_ID),
-                "Specification-Vendor", ProjectHelper.getStringProperty(target, MLProperties.MOD_AUTHORS),
-                "Specification-Version", '1',
-                "Implementation-Title", projectType.getName(),
-                "Implementation-Version", jar.getArchiveVersion(),
-                "Implementation-Vendor", ProjectHelper.getStringProperty(target, MLProperties.MOD_AUTHORS),
-                "Implementation-Timestamp", new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssZ").format(new Date())
+        tasks.withType(Jar.class).configureEach(jar -> jar.manifest(manifest -> manifest.attributes(J8Helper.mapOf(
+                J8Helper.entry("Specification-Title", ProjectHelper.getStringProperty(target, MLProperties.MOD_ID)),
+                J8Helper.entry("Specification-Vendor", ProjectHelper.getStringProperty(target, MLProperties.MOD_AUTHORS)),
+                J8Helper.entry("Specification-Version", '1'),
+                J8Helper.entry("Implementation-Title", projectType.getName()),
+                J8Helper.entry("Implementation-Version", jar.getArchiveVersion()),
+                J8Helper.entry("Implementation-Vendor", ProjectHelper.getStringProperty(target, MLProperties.MOD_AUTHORS)),
+                J8Helper.entry("Implementation-Timestamp", new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssZ").format(new Date()))
         ).entrySet().stream().filter(e -> !manifest.getAttributes().containsKey(e.getKey())).collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue)))));
 
         tasks.withType(ProcessResources.class).configureEach(pr -> {
@@ -129,7 +130,7 @@ public abstract class AbstractPlugin<E extends CommonExtension> implements Plugi
                 }
             }
             inputs.property("version", target.getVersion());
-            pr.filesMatching(List.of("/META-INF/mods.toml", "pack.mcmeta", "/fabric.mod.json", "/quilt.mod.json", "/*.txt"), f -> f.expand(inputs.getProperties(), d -> d.getEscapeBackslash().set(true)).filter(s -> s.replace("\\$", "$")));
+            pr.filesMatching(J8Helper.listOf("/META-INF/mods.toml", "pack.mcmeta", "/fabric.mod.json", "/quilt.mod.json", "/*.txt"), f -> f.expand(inputs.getProperties(), d -> d.getEscapeBackslash().set(true)).filter(s -> s.replace("\\$", "$")));
         });
 
         target.afterEvaluate(p -> {

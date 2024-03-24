@@ -12,7 +12,7 @@ import org.gradle.api.plugins.JavaPlugin;
 import org.gradle.api.tasks.SourceSet;
 import org.gradle.jvm.tasks.Jar;
 
-import java.util.Map;
+import java.util.Collections;
 
 /**
  * Created by Elec332 on 23-02-2024
@@ -35,7 +35,7 @@ public class NeoProjectPluginSC extends AbstractPluginMLSC {
                 }
             });
         });
-        SettingsPlugin.getDetails(target).getCommonProject().getTasks().named(JavaPlugin.JAR_TASK_NAME, Jar.class, j -> j.getManifest().attributes(Map.of("FMLModType", "GAMELIBRARY")));
+        SettingsPlugin.getDetails(target).getCommonProject().getTasks().named(JavaPlugin.JAR_TASK_NAME, Jar.class, j -> j.getManifest().attributes(Collections.singletonMap("FMLModType", "GAMELIBRARY")));
     }
 
 }

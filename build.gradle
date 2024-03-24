@@ -6,7 +6,9 @@ plugins {
 }
 
 group "nl.elec332.gradle.minecraft"
-version "1.0.6-Beta"
+version "1.0.7-Beta"
+
+java.toolchain.languageVersion = JavaLanguageVersion.of(8)
 
 repositories {
     mavenCentral()
