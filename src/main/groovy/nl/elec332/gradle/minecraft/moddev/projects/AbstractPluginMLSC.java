@@ -9,11 +9,11 @@ import org.gradle.api.plugins.BasePlugin;
 import org.gradle.api.plugins.JavaPlugin;
 import org.gradle.api.tasks.Copy;
 import org.gradle.api.tasks.SourceSet;
-import org.gradle.api.tasks.TaskProvider;
 import org.gradle.api.tasks.javadoc.Javadoc;
 import org.gradle.jvm.tasks.Jar;
 
 import java.util.Collections;
+import java.util.Map;
 import java.util.Objects;
 
 /**
@@ -39,17 +39,17 @@ public abstract class AbstractPluginMLSC extends AbstractPluginSC {
         });
         commonProject.getTasks().named(DEV_ALL_JAR_TASK_NAME, Jar.class, t -> t.from(main.getOutput()));
 
-        TaskProvider<Jar> devTask = target.getTasks().register(DEV_JAR_TASK_NAME, Jar.class, j -> {
+        var devTask = target.getTasks().register(DEV_JAR_TASK_NAME, Jar.class, j -> {
             j.getArchiveClassifier().set(classifier + "-dev");
             j.from(main.getOutput());
-            j.getManifest().attributes(Collections.singletonMap(MAPPINGS, ModLoader.Mapping.NAMED));
+            j.getManifest().attributes(Map.of(MAPPINGS, ModLoader.Mapping.NAMED));
         });
         addToPublication(commonProject, devTask);
         target.getTasks().named(BasePlugin.ASSEMBLE_TASK_NAME, t -> t.dependsOn(devTask));
 
         target.getTasks().named(JavaPlugin.JAR_TASK_NAME, Jar.class, j -> {
             j.from(commonMain.getOutput());
-            j.getManifest().attributes(Collections.singletonMap(MAPPINGS, Objects.requireNonNull(Objects.requireNonNull(ProjectHelper.getPlugin(target).getProjectType().getModLoader()).getMapping())));
+            j.getManifest().attributes(Map.of(MAPPINGS, Objects.requireNonNull(Objects.requireNonNull(ProjectHelper.getPlugin(target).getProjectType().getModLoader()).getMapping())));
         });
 
         target.afterEvaluate(p -> addToPublication(commonProject, target.getTasks().named(AbstractPlugin.REMAPPED_JAR_TASK_NAME)));
@@ -57,7 +57,7 @@ public abstract class AbstractPluginMLSC extends AbstractPluginSC {
         SourceSet ss = ProjectHelper.getSourceSets(target).maybeCreate("runTarget");
         ss.getJava().setSrcDirs(Collections.emptyList());
         ss.getResources().setSrcDirs(Collections.emptyList());
-        TaskProvider<Copy> copyMod = target.getTasks().register("copyMod", Copy.class, t -> {
+        var copyMod = target.getTasks().register("copyMod", Copy.class, t -> {
             t.from(main.getOutput());
             t.from(commonMain.getOutput());
             t.into(Objects.requireNonNull(ss.getOutput().getResourcesDir()));

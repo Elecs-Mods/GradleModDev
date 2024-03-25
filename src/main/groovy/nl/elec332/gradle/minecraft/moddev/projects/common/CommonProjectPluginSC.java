@@ -3,8 +3,6 @@ package nl.elec332.gradle.minecraft.moddev.projects.common;
 import nl.elec332.gradle.minecraft.moddev.MLProperties;
 import nl.elec332.gradle.minecraft.moddev.ModLoader;
 import nl.elec332.gradle.minecraft.moddev.projects.AbstractPluginSC;
-import nl.elec332.gradle.minecraft.moddev.tasks.AllJarTask;
-import nl.elec332.gradle.minecraft.moddev.tasks.AllModJarSetupTask;
 import nl.elec332.gradle.minecraft.moddev.util.GradleInternalHelper;
 import nl.elec332.gradle.minecraft.moddev.util.ProjectHelper;
 import org.gradle.api.Project;
@@ -14,11 +12,10 @@ import org.gradle.api.plugins.BasePlugin;
 import org.gradle.api.plugins.JavaPlugin;
 import org.gradle.api.publish.maven.plugins.MavenPublishPlugin;
 import org.gradle.api.tasks.SourceSet;
-import org.gradle.api.tasks.TaskProvider;
 import org.gradle.jvm.tasks.Jar;
 
 import java.io.File;
-import java.util.Collections;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Properties;
 import java.util.Set;
@@ -43,24 +40,23 @@ public final class CommonProjectPluginSC extends AbstractPluginSC {
         importProperties(target);
 
         target.getTasks().named(JavaPlugin.JAR_TASK_NAME, Jar.class).configure(j -> {
-            j.getManifest().attributes(Collections.singletonMap(MAPPINGS, ModLoader.Mapping.NAMED));
+            j.getManifest().attributes(Map.of(MAPPINGS, ModLoader.Mapping.NAMED));
         });
         target.getTasks().named("sourcesJar", Jar.class, j -> j.filesMatching("/META-INF/mods.toml", c -> c.setDuplicatesStrategy(DuplicatesStrategy.EXCLUDE)));
 
-        TaskProvider<Jar> devTask = target.getTasks().register(DEV_JAR_TASK_NAME, Jar.class, j -> {
+        var devTask = target.getTasks().register(DEV_JAR_TASK_NAME, Jar.class, j -> {
             j.getArchiveClassifier().set("common-dev");
             j.from(main.getOutput());
-            j.getManifest().attributes(Collections.singletonMap(MAPPINGS, ModLoader.Mapping.NAMED));
+            j.getManifest().attributes(Map.of(MAPPINGS, ModLoader.Mapping.NAMED));
         });
         addToPublication(target, devTask);
         target.getTasks().named(BasePlugin.ASSEMBLE_TASK_NAME, t -> t.dependsOn(devTask));
 
-        TaskProvider<Jar> devAllTask = target.getTasks().register(DEV_ALL_JAR_TASK_NAME, Jar.class, j -> {
+        var devAllTask = target.getTasks().register(DEV_ALL_JAR_TASK_NAME, Jar.class, j -> {
             j.getArchiveClassifier().set("all-dev");
             j.from(main.getOutput());
             j.filesMatching("/META-INF/mods.toml", c -> c.setDuplicatesStrategy(DuplicatesStrategy.EXCLUDE));
-            j.getManifest().attributes(Collections.singletonMap(MAPPINGS, ModLoader.Mapping.NAMED));
-            j.getManifest().attributes(Collections.singletonMap("Implementation-Title", "all"));
+            j.getManifest().attributes(Map.of(MAPPINGS, ModLoader.Mapping.NAMED, "Implementation-Title", "all"));
         });
         addToPublication(target, devAllTask);
         target.getTasks().named(BasePlugin.ASSEMBLE_TASK_NAME, t -> t.dependsOn(devAllTask));

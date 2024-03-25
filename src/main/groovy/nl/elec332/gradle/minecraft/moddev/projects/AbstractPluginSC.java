@@ -21,7 +21,7 @@ public abstract class AbstractPluginSC implements Plugin<Project> {
 
     @Override
     public final void apply(@NotNull Project target) {
-        ProjectHelper.checkProperties(target, Collections.singleton(MLProperties.ELECLOADER_VERSION));
+        ProjectHelper.checkProperties(target, Set.of(MLProperties.ELECLOADER_VERSION));
         target.getRepositories().mavenLocal();
         applyPlugin(target, ProjectHelper.getSourceSets(target).maybeCreate(SourceSet.MAIN_SOURCE_SET_NAME));
     }

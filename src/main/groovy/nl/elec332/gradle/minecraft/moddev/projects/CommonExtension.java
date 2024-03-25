@@ -94,7 +94,7 @@ public class CommonExtension {
             if (serverMixins != null) {
                 m.put("server", serverMixins);
             }
-            m.put("injectors", Collections.singletonMap("defaultRequire", 1));
+            m.put("injectors", Map.of("defaultRequire", 1));
             m.put("minVersion", "0.8");
             b.call(m);
             return b.toPrettyString();

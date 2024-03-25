@@ -7,7 +7,6 @@ import nl.elec332.gradle.minecraft.moddev.MLProperties;
 import nl.elec332.gradle.minecraft.moddev.ModLoader;
 import nl.elec332.gradle.minecraft.moddev.ModLoaderType;
 import nl.elec332.gradle.minecraft.moddev.util.GradleInternalHelper;
-import nl.elec332.gradle.minecraft.moddev.util.J8Helper;
 import nl.elec332.gradle.minecraft.moddev.util.MappedData;
 import nl.elec332.gradle.minecraft.moddev.util.ProjectHelper;
 import org.gradle.api.Action;
@@ -133,7 +132,7 @@ public class ModMetadataImpl implements ModMetadata {
 
     @Override
     public void mixin(String s) {
-        this.data.mergeWith(MappedData.ofStringCollection(mixinEntry(), J8Helper.listOf(s)));
+        this.data.mergeWith(MappedData.ofStringCollection(mixinEntry(), List.of(s)));
     }
 
     @Override
@@ -244,7 +243,7 @@ public class ModMetadataImpl implements ModMetadata {
             if (m == null) {
                 m = new MappedData();
                 m.putString("modId", modId);
-                this.data.mergeWith(MappedData.ofMapCollection("mods", J8Helper.listOf(m)));
+                this.data.mergeWith(MappedData.ofMapCollection("mods", List.of(m)));
             }
             mod.execute(new ForgeModInfo(m));
         }
@@ -262,7 +261,7 @@ public class ModMetadataImpl implements ModMetadata {
         }
 
         if (iData.containsKey(key)) {
-            for (MappedData m2 : iData.getMapCollection(key).collect(Collectors.toList())) {
+            for (MappedData m2 : iData.getMapCollection(key).toList()) {
                 if (modId.equals(m2.getString(id))) {
                     m = m2;
                     break;
@@ -274,7 +273,7 @@ public class ModMetadataImpl implements ModMetadata {
         }
 
         m = new MappedData();
-        iData.mergeWith(MappedData.ofMapCollection(key, J8Helper.listOf(m)));
+        iData.mergeWith(MappedData.ofMapCollection(key, List.of(m)));
         m.putString(id, modId);
         return m;
     }
@@ -331,7 +330,7 @@ public class ModMetadataImpl implements ModMetadata {
                         m.putString("versions", from + " " + to);
                         break;
                     case QUILT:
-                        m.mergeWith(MappedData.of("versions", MappedData.ofStringCollection("all", J8Helper.listOf(from, to))));
+                        m.mergeWith(MappedData.of("versions", MappedData.ofStringCollection("all", List.of(from, to))));
                         break;
                     case FORGE:
                     case NEO_FORGE:
@@ -376,18 +375,14 @@ public class ModMetadataImpl implements ModMetadata {
     }
 
     @Override
+    @SuppressWarnings("UnnecessaryDefault")
     public String getFileLocation() {
-        switch (this.loader) {
-            case FABRIC:
-                return "fabric.mod.json";
-            case QUILT:
-                return "quilt.mod.json";
-            case FORGE:
-            case NEO_FORGE:
-                return "META-INF/mods.toml";
-            default:
-                throw new UnsupportedOperationException();
-        }
+        return switch (this.loader) {
+            case FABRIC -> "fabric.mod.json";
+            case QUILT -> "quilt.mod.json";
+            case FORGE, NEO_FORGE -> "META-INF/mods.toml";
+            default -> throw new UnsupportedOperationException();
+        };
     }
 
     @Override
@@ -431,7 +426,7 @@ public class ModMetadataImpl implements ModMetadata {
 
                 Stream.of("mixins", "forgemixins").forEach(mixName -> {
                     if (map.containsKey(mixName)) {
-                        map.mergeWith(MappedData.ofMapCollection(mixName, map.removeStringCollection(mixName).stream().map(s -> MappedData.of("config", s)).collect(Collectors.toList())));
+                        map.mergeWith(MappedData.ofMapCollection(mixName, map.removeStringCollection(mixName).stream().map(s -> MappedData.of("config", s)).toList()));
                     }
                 });
                 break;
@@ -445,6 +440,7 @@ public class ModMetadataImpl implements ModMetadata {
     }
 
     //Credits, updateJson, side
+    @SuppressWarnings("ClassCanBeRecord") // No it can't
     private static class ForgeModInfo implements ModInfo {
 
         private ForgeModInfo(MappedData map) {

@@ -39,7 +39,7 @@ public final class RuntimeProjectPluginRequests implements AutoAppliedPluginRegi
         try {
             Field f = DefaultAutoAppliedPluginHandler.class.getDeclaredField("registry");
             f.setAccessible(true);
-            f.set(autoAppliedPluginHandler, new CompositeAutoAppliedPluginRegistry(J8Helper.listOf((AutoAppliedPluginRegistry) f.get(autoAppliedPluginHandler), new RuntimeProjectPluginRequests())));
+            f.set(autoAppliedPluginHandler, new CompositeAutoAppliedPluginRegistry(List.of((AutoAppliedPluginRegistry) f.get(autoAppliedPluginHandler), new RuntimeProjectPluginRequests())));
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
