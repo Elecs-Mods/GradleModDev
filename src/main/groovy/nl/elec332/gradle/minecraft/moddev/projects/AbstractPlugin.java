@@ -219,7 +219,7 @@ public abstract class AbstractPlugin<E extends CommonExtension> implements Plugi
     private static void importCommonProject(Project root, Project common, CommonMLExtension extension) {
         root.getDependencies().add(JavaPlugin.COMPILE_ONLY_CONFIGURATION_NAME, common);
         TaskContainer tasks = root.getTasks();
-        SourceSet commonMain = ProjectHelper.getSourceSets(root).maybeCreate(SourceSet.MAIN_SOURCE_SET_NAME);
+        SourceSet commonMain = ProjectHelper.getSourceSets(common).maybeCreate(SourceSet.MAIN_SOURCE_SET_NAME);
         if (extension.addCommonSourceToAll) {
             Spec<Task> notNeoTask = t -> !t.getName().startsWith("neo");
             tasks.withType(JavaCompile.class).matching(notNeoTask).configureEach(c -> c.source(commonMain.getAllSource()));
