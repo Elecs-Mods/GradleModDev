@@ -35,7 +35,7 @@ public final class CommonProjectPluginSC extends AbstractPluginSC {
 
         Configuration commonConfig = target.getConfigurations().create(COMMON_CONFIG_NAME);
         target.getConfigurations().getByName(JavaPlugin.IMPLEMENTATION_CONFIGURATION_NAME).extendsFrom(commonConfig);
-        target.getDependencies().add(COMMON_CONFIG_NAME, "nl.elec332.minecraft.loader:ElecLoader:" + ProjectHelper.getStringProperty(target, MLProperties.ELECLOADER_VERSION));
+        target.getDependencies().add(COMMON_CONFIG_NAME, "nl.elec332.minecraft.loader:ElecLoader:" + ProjectHelper.getStringProperty(target, MLProperties.ELECLOADER_VERSION) + ":dev");
 
         importProperties(target);
 
@@ -43,14 +43,6 @@ public final class CommonProjectPluginSC extends AbstractPluginSC {
             j.getManifest().attributes(Map.of(MAPPINGS, ModLoader.Mapping.NAMED));
         });
         target.getTasks().named("sourcesJar", Jar.class, j -> j.filesMatching("/META-INF/mods.toml", c -> c.setDuplicatesStrategy(DuplicatesStrategy.EXCLUDE)));
-
-        var devTask = target.getTasks().register(DEV_JAR_TASK_NAME, Jar.class, j -> {
-            j.getArchiveClassifier().set("common-dev");
-            j.from(main.getOutput());
-            j.getManifest().attributes(Map.of(MAPPINGS, ModLoader.Mapping.NAMED));
-        });
-        addToPublication(target, devTask);
-        target.getTasks().named(BasePlugin.ASSEMBLE_TASK_NAME, t -> t.dependsOn(devTask));
 
         var devAllTask = target.getTasks().register(DEV_ALL_JAR_TASK_NAME, Jar.class, j -> {
             j.getArchiveClassifier().set("all-dev");
@@ -61,7 +53,6 @@ public final class CommonProjectPluginSC extends AbstractPluginSC {
         addToPublication(target, devAllTask);
         target.getTasks().named(BasePlugin.ASSEMBLE_TASK_NAME, t -> t.dependsOn(devAllTask));
 
-        target.getArtifacts().add("archives", devTask);
         getModPublication(target).from(target.getComponents().getByName(GradleInternalHelper.JAVA_MAIN_COMPONENT_NAME));
     }
 

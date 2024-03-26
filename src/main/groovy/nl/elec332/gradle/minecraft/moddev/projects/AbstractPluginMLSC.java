@@ -1,11 +1,9 @@
 package nl.elec332.gradle.minecraft.moddev.projects;
 
-import nl.elec332.gradle.minecraft.moddev.ModLoader;
 import nl.elec332.gradle.minecraft.moddev.SettingsPlugin;
 import nl.elec332.gradle.minecraft.moddev.tasks.CheckCompileTask;
 import nl.elec332.gradle.minecraft.moddev.util.ProjectHelper;
 import org.gradle.api.Project;
-import org.gradle.api.plugins.BasePlugin;
 import org.gradle.api.plugins.JavaPlugin;
 import org.gradle.api.tasks.Copy;
 import org.gradle.api.tasks.SourceSet;
@@ -28,7 +26,6 @@ public abstract class AbstractPluginMLSC extends AbstractPluginSC {
         SourceSet commonMain = ProjectHelper.getSourceSets(commonProject).maybeCreate(SourceSet.MAIN_SOURCE_SET_NAME);
         target.beforeEvaluate(trgt -> trgt.getTasks().named(AbstractPlugin.CHECK_CLASSES_TASK, CheckCompileTask.class, t -> t.checkSource(commonMain)));
         target.getDependencies().add(JavaPlugin.COMPILE_ONLY_CONFIGURATION_NAME, commonProject);
-        String classifier = target.getName();
 
         commonProject.getTasks().named(JavaPlugin.JAVADOC_TASK_NAME, Javadoc.class, t -> t.source(main.getJava()));
         commonProject.getTasks().named("sourcesJar", Jar.class, t -> {
@@ -38,14 +35,6 @@ public abstract class AbstractPluginMLSC extends AbstractPluginSC {
             t.dependsOn(pr);
         });
         commonProject.getTasks().named(DEV_ALL_JAR_TASK_NAME, Jar.class, t -> t.from(main.getOutput()));
-
-        var devTask = target.getTasks().register(DEV_JAR_TASK_NAME, Jar.class, j -> {
-            j.getArchiveClassifier().set(classifier + "-dev");
-            j.from(main.getOutput());
-            j.getManifest().attributes(Map.of(MAPPINGS, ModLoader.Mapping.NAMED));
-        });
-        addToPublication(commonProject, devTask);
-        target.getTasks().named(BasePlugin.ASSEMBLE_TASK_NAME, t -> t.dependsOn(devTask));
 
         target.getTasks().named(JavaPlugin.JAR_TASK_NAME, Jar.class, j -> {
             j.from(commonMain.getOutput());

@@ -1,5 +1,6 @@
 package nl.elec332.gradle.minecraft.moddev;
 
+import nl.elec332.gradle.minecraft.moddev.projects.AbstractPlugin;
 import nl.elec332.gradle.minecraft.moddev.util.GradleInternalHelper;
 import nl.elec332.gradle.minecraft.moddev.util.ProjectHelper;
 import org.gradle.api.JavaVersion;
@@ -63,11 +64,11 @@ public class AllProjectsPlugin implements Plugin<Project> {
         target.getPluginManager().apply(IdeaPlugin.class);
         target.getPluginManager().apply(EclipsePlugin.class);
         target.beforeEvaluate(p -> {
-            p.getTasks().withType(JavaCompile.class).configureEach(c -> {
+            p.getTasks().withType(JavaCompile.class).matching(AbstractPlugin.notNeoTask).configureEach(c -> {
                 c.getOptions().setEncoding(UTF8);
                 c.getOptions().getRelease().set(cfg.javaVersion);
             });
-            p.getTasks().withType(Javadoc.class).configureEach(javadoc -> {
+            p.getTasks().withType(Javadoc.class).matching(AbstractPlugin.notNeoTask).configureEach(javadoc -> {
                 javadoc.getOptions().setEncoding(UTF8);
                 ((StandardJavadocDocletOptions) javadoc.getOptions()).setCharSet(UTF8);
                 if (cfg.quietJavaDoc) {

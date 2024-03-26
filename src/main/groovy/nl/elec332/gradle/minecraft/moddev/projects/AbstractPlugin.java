@@ -50,7 +50,10 @@ public abstract class AbstractPlugin<E extends CommonExtension> implements Plugi
     public static String GENERATE_MODINFO_TASK = "generateModInfo";
     public static String CHECK_CLASSES_TASK = "checkClasses";
     public static String GENERATE_METADATA = "generateMetadata";
-    protected static final String REMAPPED_JAR_TASK_NAME = "remappedJar";
+    public static final String REMAPPED_JAR_TASK_NAME = "remappedJar";
+    public static final String DEV_JAR_TASK_NAME = "devJar";
+
+    public static final Spec<Task> notNeoTask = t -> !(t.getGroup() != null && t.getGroup().toLowerCase(Locale.ROOT).startsWith("neogradle"));
 
     private final ProjectType projectType;
 
@@ -77,9 +80,9 @@ public abstract class AbstractPlugin<E extends CommonExtension> implements Plugi
             tasks.withType(GenerateModInfoTask.class).forEach(gm::dependsOn);
         });
 
-        tasks.withType(JavaCompile.class).configureEach(t -> t.dependsOn(GENERATE_METADATA));
-        tasks.withType(Jar.class).configureEach(t -> t.dependsOn(GENERATE_METADATA));
-        tasks.withType(ProcessResources.class).configureEach(t -> t.dependsOn(GENERATE_METADATA));
+        tasks.withType(JavaCompile.class).matching(notNeoTask).configureEach(t -> t.dependsOn(GENERATE_METADATA));
+        tasks.withType(Jar.class).matching(notNeoTask).configureEach(t -> t.dependsOn(GENERATE_METADATA));
+        tasks.withType(ProcessResources.class).matching(notNeoTask).configureEach(t -> t.dependsOn(GENERATE_METADATA));
 
         if (!isCommon) {
             tasks.create(GENERATE_MIXIN_TASK, GenerateMixinJsonTask.class);
@@ -111,7 +114,13 @@ public abstract class AbstractPlugin<E extends CommonExtension> implements Plugi
         });
         target.getTasks().named(BasePlugin.ASSEMBLE_TASK_NAME, t -> t.dependsOn(remapTask));
 
-        tasks.withType(Jar.class).configureEach(jar -> jar.manifest(manifest -> manifest.attributes(Map.of(
+        var devTask = target.getTasks().register(DEV_JAR_TASK_NAME, Jar.class, j -> {
+            j.getArchiveClassifier().set(getArchiveClassifier() + "-dev");
+            j.from(ProjectHelper.getSourceSets(target).getByName(SourceSet.MAIN_SOURCE_SET_NAME).getOutput());
+        });
+        target.getTasks().named(BasePlugin.ASSEMBLE_TASK_NAME, t -> t.dependsOn(devTask));
+
+        tasks.withType(Jar.class).matching(notNeoTask).configureEach(jar -> jar.manifest(manifest -> manifest.attributes(Map.of(
                 "Specification-Title", ProjectHelper.getStringProperty(target, MLProperties.MOD_ID),
                 "Specification-Vendor", ProjectHelper.getStringProperty(target, MLProperties.MOD_AUTHORS),
                 "Specification-Version", '1',
@@ -121,7 +130,7 @@ public abstract class AbstractPlugin<E extends CommonExtension> implements Plugi
                 "Implementation-Timestamp", new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssZ").format(new Date())
         ).entrySet().stream().filter(e -> !manifest.getAttributes().containsKey(e.getKey())).collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue)))));
 
-        tasks.withType(ProcessResources.class).configureEach(pr -> {
+        tasks.withType(ProcessResources.class).matching(notNeoTask).configureEach(pr -> {
             TaskInputs inputs = pr.getInputs();
             for (String s : MLProperties.ALL_PROPS) {
                 if (ProjectHelper.hasProperty(target, s)) {
@@ -221,7 +230,6 @@ public abstract class AbstractPlugin<E extends CommonExtension> implements Plugi
         TaskContainer tasks = root.getTasks();
         SourceSet commonMain = ProjectHelper.getSourceSets(common).maybeCreate(SourceSet.MAIN_SOURCE_SET_NAME);
         if (extension.addCommonSourceToAll) {
-            Spec<Task> notNeoTask = t -> !t.getName().startsWith("neo");
             tasks.withType(JavaCompile.class).matching(notNeoTask).configureEach(c -> c.source(commonMain.getAllSource()));
             tasks.withType(Javadoc.class).matching(notNeoTask).configureEach(d -> d.source(commonMain.getAllJava()));
             tasks.withType(ProcessResources.class).matching(notNeoTask).configureEach(r -> r.from(commonMain.getResources()));
