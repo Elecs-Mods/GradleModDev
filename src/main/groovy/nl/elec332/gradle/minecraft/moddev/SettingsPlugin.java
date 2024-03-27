@@ -76,6 +76,7 @@ public class SettingsPlugin implements Plugin<Settings> {
         private boolean generateModInfo = true;
         private boolean superCommonMode = false;
         private boolean useBuildNumber = false;
+        private boolean singleProject = false;
 
         @NotNull
         public Project getCommonProject() {
@@ -86,7 +87,7 @@ public class SettingsPlugin implements Plugin<Settings> {
         }
 
         public final boolean singleProject() {
-            return projects.size() == 1;
+            return singleProject;
         }
 
         public boolean generateModInfo() {
@@ -184,6 +185,7 @@ public class SettingsPlugin implements Plugin<Settings> {
             mdd.generateModInfo = cfg.generateModInfo;
             mdd.superCommonMode = cfg.superCommonMode;
             mdd.useBuildNumber = cfg.useBuildNumber;
+            mdd.singleProject = singleProject[0];
         });
 
         settings.getRootProject().setName((String) Objects.requireNonNull(settings.getExtensions().getExtraProperties().get(MLProperties.MOD_NAME)));

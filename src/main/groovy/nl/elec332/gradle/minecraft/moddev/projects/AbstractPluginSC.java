@@ -29,8 +29,10 @@ public abstract class AbstractPluginSC implements Plugin<Project> {
         target.getRepositories().mavenLocal();
 
         Project commonProject = SettingsPlugin.getDetails(target).getCommonProject();
-        var devTask = target.getTasks().named(AbstractPlugin.DEV_JAR_TASK_NAME, Jar.class, j -> j.getManifest().attributes(Map.of(MAPPINGS, ModLoader.Mapping.NAMED)));
-        addToPublication(commonProject, devTask);
+        target.beforeEvaluate(p -> {
+            var devTask = target.getTasks().named(AbstractPlugin.DEV_JAR_TASK_NAME, Jar.class, j -> j.getManifest().attributes(Map.of(MAPPINGS, ModLoader.Mapping.NAMED)));
+            addToPublication(commonProject, devTask);
+        });
 
         applyPlugin(target, ProjectHelper.getSourceSets(target).maybeCreate(SourceSet.MAIN_SOURCE_SET_NAME));
     }
