@@ -1,6 +1,7 @@
 package nl.elec332.gradle.minecraft.moddev.projects;
 
 import nl.elec332.gradle.minecraft.moddev.SettingsPlugin;
+import nl.elec332.gradle.minecraft.moddev.util.ProjectHelper;
 import org.gradle.api.Project;
 import org.gradle.api.tasks.SourceSet;
 
@@ -13,7 +14,9 @@ import java.util.Set;
  */
 public class CommonMLExtension extends CommonExtension {
 
-    public SourceSet runtimeSource;
+    public SourceSet runtimeSource = ProjectHelper.getSourceSets(getProject()).getByName(SourceSet.MAIN_SOURCE_SET_NAME);
+
+    public SourceSet mainModSource = ProjectHelper.getSourceSets(getProject()).getByName(SourceSet.MAIN_SOURCE_SET_NAME);
 
     public boolean addCommonDependency = !SettingsPlugin.isSuperCommonMode(getProject());
 

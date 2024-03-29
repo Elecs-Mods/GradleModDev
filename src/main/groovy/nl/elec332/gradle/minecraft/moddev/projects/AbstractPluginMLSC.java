@@ -58,6 +58,12 @@ public abstract class AbstractPluginMLSC extends AbstractPluginSC {
         applyMLPlugin(target, main, ss, commonMain);
 
         target.beforeEvaluate(p -> target.getExtensions().getByType(CommonMLExtension.class).runtimeSource = ss);
+        target.afterEvaluate(p -> {
+            SourceSet mss = target.getExtensions().getByType(CommonMLExtension.class).mainModSource;
+            if (mss != null && mss != main) {
+                throw new UnsupportedOperationException();
+            }
+        });
     }
 
     protected abstract void applyMLPlugin(Project target, SourceSet main, SourceSet run, SourceSet commonMain);

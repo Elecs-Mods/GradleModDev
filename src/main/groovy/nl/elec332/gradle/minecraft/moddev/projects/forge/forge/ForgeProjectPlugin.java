@@ -4,6 +4,7 @@ import nl.elec332.gradle.minecraft.moddev.MLProperties;
 import nl.elec332.gradle.minecraft.moddev.ProjectType;
 import nl.elec332.gradle.minecraft.moddev.projects.ModMetadata;
 import nl.elec332.gradle.minecraft.moddev.projects.forge.ForgeBasedPlugin;
+import nl.elec332.gradle.minecraft.moddev.tasks.GenerateMcMetaTask;
 import nl.elec332.gradle.minecraft.moddev.util.ProjectHelper;
 import org.gradle.api.Project;
 import org.gradle.api.Task;
@@ -13,6 +14,7 @@ import org.gradle.api.tasks.TaskProvider;
 import org.gradle.api.tasks.bundling.AbstractArchiveTask;
 import org.gradle.api.tasks.compile.JavaCompile;
 import org.gradle.jvm.tasks.Jar;
+import org.gradle.language.jvm.tasks.ProcessResources;
 
 import java.io.File;
 import java.util.List;
@@ -29,10 +31,14 @@ public class ForgeProjectPlugin extends ForgeBasedPlugin<ForgeExtension> {
     }
 
     public static final String REMAP_JAR_TASK = "reobfJar";
+    public static final String GENERATE_PACKINFO_TASK = "generatePackInfo";
 
     @Override
     protected void beforeProject(Project project) {
         project.getTasks().withType(AbstractPublishToMaven.class, m -> m.dependsOn(REMAP_JAR_TASK));
+
+        GenerateMcMetaTask mm = project.getTasks().create(GENERATE_PACKINFO_TASK, GenerateMcMetaTask.class);
+        project.getTasks().named(GENERATE_METADATA, p -> p.dependsOn(mm));
     }
 
     @Override
@@ -46,6 +52,9 @@ public class ForgeProjectPlugin extends ForgeBasedPlugin<ForgeExtension> {
         ForgeExtension extension = getExtension(project);
         ForgeGroovyHelper.setRunSettings(project, extension);
         ForgeGroovyHelper.setMixinRunSettings(project);
+        if (extension.mainModSource != null) {
+            project.getTasks().named(extension.mainModSource.getProcessResourcesTaskName(), ProcessResources.class, r -> r.from(project.getTasks().named(GENERATE_PACKINFO_TASK)));
+        }
     }
 
     @Override

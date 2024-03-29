@@ -182,6 +182,12 @@ public abstract class AbstractPlugin<E extends CommonExtension> implements Plugi
                         importModMeta(dp, p);
                     }
                 }
+                if (((CommonMLExtension) extension).mainModSource != null) {
+                    p.getTasks().named(((CommonMLExtension) extension).mainModSource.getProcessResourcesTaskName(), ProcessResources.class, r -> {
+                        r.from(p.getTasks().named(GENERATE_MODINFO_TASK));
+                        r.from(p.getTasks().named(GENERATE_MIXIN_TASK));
+                    });
+                }
             } else if (!extension.getMixins().isEmpty()) {
                 addMixinDependencies(p);
             }
