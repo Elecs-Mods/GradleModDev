@@ -33,12 +33,14 @@ public class NeoProjectPlugin extends ForgeBasedPlugin<NeoExtension> {
 
     @Override
     public void afterRuntimePluginsAdded(Project project) {
-        project.getDependencies().add(JavaPlugin.IMPLEMENTATION_CONFIGURATION_NAME, "net.neoforged:neoforge:" + ProjectHelper.getStringProperty(project, MLProperties.NEO_VERSION));
         NeoGroovyHelper.setMinecraftSettings(project);
     }
 
     @Override
     protected void afterProject(Project project) {
+        //Here because of https://github.com/neoforged/NeoGradle/issues/136
+        project.getDependencies().add(JavaPlugin.IMPLEMENTATION_CONFIGURATION_NAME, "net.neoforged:neoforge:" + ProjectHelper.getStringProperty(project, MLProperties.NEO_VERSION));
+
         NeoGroovyHelper.setRunSettings(project, getExtension(project));
     }
 
