@@ -174,7 +174,8 @@ public class SettingsPlugin implements Plugin<Settings> {
                     String name = l.getName();
                     File f = new File(s.getRootDir(), name);
                     if (!f.exists() && cfg.superCommonMode) {
-                        s.include(":build:" + name);
+                        s.include(name);
+                        s.project(":" + name).setProjectDir(new File(s.getRootDir(), "build/" + name));
                     } else {
                         s.include(name);
                     }

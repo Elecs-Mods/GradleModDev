@@ -34,12 +34,12 @@ public class NeoProjectPlugin extends ForgeBasedPlugin<NeoExtension> {
     @Override
     public void afterRuntimePluginsAdded(Project project) {
         project.getDependencies().add(JavaPlugin.IMPLEMENTATION_CONFIGURATION_NAME, "net.neoforged:neoforge:" + ProjectHelper.getStringProperty(project, MLProperties.NEO_VERSION));
-        NeoGroovyHelper.setRunSettings(project, getExtension(project));
         NeoGroovyHelper.setMinecraftSettings(project);
     }
 
     @Override
     protected void afterProject(Project project) {
+        NeoGroovyHelper.setRunSettings(project, getExtension(project));
     }
 
     @Override

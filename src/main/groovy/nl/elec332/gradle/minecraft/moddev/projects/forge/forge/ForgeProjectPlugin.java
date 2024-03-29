@@ -39,11 +39,12 @@ public class ForgeProjectPlugin extends ForgeBasedPlugin<ForgeExtension> {
     public void afterRuntimePluginsAdded(Project project) {
         project.getDependencies().add("minecraft", "net.minecraftforge:forge:" + ProjectHelper.getStringProperty(project, MLProperties.MC_VERSION) + "-" + ProjectHelper.getStringProperty(project, MLProperties.FORGE_VERSION));
         ForgeGroovyHelper.setMinecraftSettings(project);
-        ForgeGroovyHelper.setRunSettings(project, getExtension(project));
     }
 
     @Override
     protected void afterProject(Project project) {
+        ForgeExtension extension = getExtension(project);
+        ForgeGroovyHelper.setRunSettings(project, extension);
         ForgeGroovyHelper.setMixinRunSettings(project);
     }
 

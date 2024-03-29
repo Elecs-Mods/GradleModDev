@@ -16,9 +16,7 @@ class FabricBasedGroovyHelper {
                 runs {
                     configureEach {
                         runDir project.relativePath(project.rootProject.file("run/" + ProjectType.getIdentifier(project) + "/" + it.name))
-                        if (extension.runtimeSource != null) {
-                            setSource extension.runtimeSource
-                        }
+                        setSource Objects.requireNonNull(extension.runtimeSource)
                     }
                 }
             }

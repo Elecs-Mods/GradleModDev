@@ -16,6 +16,14 @@ class ForgeGroovyHelper {
             minecraft {
                 mappings channel: 'official', version: ProjectHelper.getStringProperty(project, MLProperties.MC_VERSION)
             }
+
+            if (!SettingsPlugin.isSuperCommonMode(project)) {
+                sourceSets.each {
+                    def dir = layout.buildDirectory.dir("sourcesSets/$it.name")
+                    it.output.resourcesDir = dir
+                    it.java.destinationDirectory = dir
+                }
+            }
         })
     }
 
@@ -45,9 +53,7 @@ class ForgeGroovyHelper {
                 }
                 runs {
                     configureEach {
-                        if (extension.runtimeSource != null) {
-                            source(extension.runtimeSource)
-                        }
+                        source Objects.requireNonNull(extension.runtimeSource)
                         workingDirectory project.rootProject.file("run/" + ProjectType.getIdentifier(project) + "/" + it.name)
                         if (extension.loggingMarkers != null) {
                             property 'forge.logging.markers', extension.loggingMarkers
@@ -62,16 +68,8 @@ class ForgeGroovyHelper {
                         }
                     }
                 }
-                runs.create("client")
-                runs.create("server")
-            }
-
-            if (!SettingsPlugin.isSuperCommonMode(project)) {
-                sourceSets.each {
-                    def dir = layout.buildDirectory.dir("sourcesSets/$it.name")
-                    it.output.resourcesDir = dir
-                    it.java.destinationDirectory = dir
-                }
+                runs.maybeCreate("client")
+                runs.maybeCreate("server")
             }
         })
     }
