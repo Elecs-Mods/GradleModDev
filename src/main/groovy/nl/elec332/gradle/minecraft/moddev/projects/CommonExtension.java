@@ -62,26 +62,34 @@ public class CommonExtension {
         public List<String> serverMixins = null;
 
         public String toJson(Action<Mixin> modifier, Project project) {
-            if (mixins == null && clientMixins == null && plugin == null) {
+            boolean hasMixins = false;
+            hasMixins |= mixins != null && !mixins.isEmpty();
+            hasMixins |= clientMixins != null && !clientMixins.isEmpty();
+            hasMixins |= serverMixins != null && !serverMixins.isEmpty();
+            if (!hasMixins && plugin == null) {
                 throw new IllegalArgumentException("Attempting to add mixin config without mixins or plugin!");
             }
             if (modifier != null) {
                 modifier.execute(this);
             }
-            if (this.compatibilityLevel == null) {
-                this.compatibilityLevel = project.getExtensions().getByType(JavaPluginExtension.class).getTargetCompatibility();
+            JavaVersion compatibilityLevel = this.compatibilityLevel;
+            if (compatibilityLevel == null) {
+                compatibilityLevel = project.getExtensions().getByType(JavaPluginExtension.class).getTargetCompatibility();
             }
             JsonBuilder b = new JsonBuilder();
             Map<String, Object> m = new HashMap<>();
             m.put("required", required);
-            if (!(plugin != null && mixinPackage == null)) {
+            if (!(plugin != null && mixinPackage == null && !hasMixins)) {
                 m.put("package", Objects.requireNonNull(mixinPackage));
             }
             m.put("compatibilityLevel", "JAVA_" + Objects.requireNonNull(compatibilityLevel).getMajorVersion());
-            if (refMap == null || refMap.isEmpty()) {
-                refMap = ProjectHelper.getMixinRefMap(project);
+            if (hasMixins) {
+                String refMap = this.refMap;
+                if (refMap == null || refMap.isEmpty()) {
+                    refMap = ProjectHelper.getMixinRefMap(project);
+                }
+                m.put("refmap", refMap);
             }
-            m.put("refmap", refMap);
             if (plugin != null) {
                 m.put("plugin", plugin);
             }
