@@ -28,13 +28,17 @@ public class MappedData implements Serializable {
     }
 
     public static MappedData of(Consumer<MappedData> builder) {
-        MappedData ret = new MappedData(new HashMap<>(), false);
+        MappedData ret = new MappedData(newMapImpl(), false);
         builder.accept(ret);
         return new MappedData(ret.data);
     }
 
+    private static Map<String, Object> newMapImpl() {
+        return new LinkedHashMap<>();
+    }
+
     public MappedData() {
-        this(new HashMap<>());
+        this(newMapImpl());
     }
 
     private MappedData(Map<String, Object> backedData) {
@@ -108,7 +112,7 @@ public class MappedData implements Serializable {
 
     @SuppressWarnings("unchecked")
     public MappedData getOrCreateMap(String key) {
-        return new MappedData((Map<String, Object>) this.data.computeIfAbsent(key, s -> new HashMap<>()));
+        return new MappedData((Map<String, Object>) this.data.computeIfAbsent(key, s -> newMapImpl()));
     }
 
     public String removeString(String entry) {

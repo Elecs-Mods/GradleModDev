@@ -400,12 +400,14 @@ public class ModMetadataImpl implements ModMetadata {
         MappedData ret = map;
         switch (this.loader) {
             case FABRIC:
-                map.put("schemaVersion", 1);
+                ret = new MappedData();
+                ret.put("schemaVersion", 1);
                 if (map.containsKey("depends")) {
                     MappedData map2 = new MappedData();
                     map.removeMapCollection("depends").forEach(d -> map2.putString(d.getString("id"), d.getString("versions")));
                     map.mergeWith(MappedData.of("depends", map2));
                 }
+                ret.mergeWith(map);
                 break;
             case QUILT:
                 MappedData map2 = MappedData.of(b -> {
