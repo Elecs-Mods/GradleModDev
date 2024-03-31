@@ -31,7 +31,7 @@ public class ForgeProjectPlugin extends ForgeBasedPlugin<ForgeExtension> {
     }
 
     public static final String REMAP_JAR_TASK = "reobfJar";
-    public static final String GENERATE_PACKINFO_TASK = "generatePackInfo";
+    private static final String GENERATE_PACKINFO_TASK = "generatePackInfo";
 
     @Override
     protected void beforeProject(Project project) {
@@ -68,16 +68,23 @@ public class ForgeProjectPlugin extends ForgeBasedPlugin<ForgeExtension> {
             throw new RuntimeException("Missing property: " + MLProperties.MIXIN_VERSION);
         }
         project.getDependencies().add(JavaPlugin.ANNOTATION_PROCESSOR_CONFIGURATION_NAME, "org.spongepowered:mixin:" + ProjectHelper.getProperty(project, MLProperties.MIXIN_VERSION) + ":processor");
-        project.afterEvaluate(p -> ProjectHelper.getSourceSets(p).forEach(ss -> p.getTasks().named(ss.getCompileJavaTaskName(), JavaCompile.class, c -> {
-            c.dependsOn("createMcpToSrg");
-            File destDir = c.getDestinationDirectory().getAsFile().get();
-            c.getOptions().getCompilerArgs().addAll(List.of(
-                    "-AreobfTsrgFile=" + p.getLayout().getBuildDirectory().file("createMcpToSrg/output.tsrg").get().getAsFile().getPath(),
-                    "-AoutRefMapFile=" + new File(destDir, ProjectHelper.getMixinRefMap(project)).getPath(),
-                    "-AmappingTypes=tsrg",
-                    "-AdefaultObfuscationEnv=searge"
-            ));
-        })));
+        File rootDir = project.getLayout().getBuildDirectory().dir("generated/refmaps").get().getAsFile();
+        project.afterEvaluate(p -> ProjectHelper.getSourceSets(p).forEach(ss -> {
+            File ssRefMap = new File(rootDir,  ss.getName() + "/" + ProjectHelper.getMixinRefMap(project));
+            TaskProvider<JavaCompile> compileTask = p.getTasks().named(ss.getCompileJavaTaskName(), JavaCompile.class, c -> {
+                c.dependsOn("createMcpToSrg");
+                c.getOptions().getCompilerArgs().addAll(List.of(
+                        "-AreobfTsrgFile=" + p.getLayout().getBuildDirectory().file("createMcpToSrg/output.tsrg").get().getAsFile().getPath(),
+                        "-AoutRefMapFile=" + ssRefMap.getPath(),
+                        "-AmappingTypes=tsrg",
+                        "-AdefaultObfuscationEnv=searge"
+                ));
+            });
+            p.getTasks().named(ss.getProcessResourcesTaskName(), ProcessResources.class, r -> {
+                r.from(ssRefMap);
+                r.dependsOn(compileTask);
+            });
+        }));
     }
 
     @Override

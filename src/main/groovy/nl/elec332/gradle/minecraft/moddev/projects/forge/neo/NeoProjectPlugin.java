@@ -4,9 +4,11 @@ import nl.elec332.gradle.minecraft.moddev.MLProperties;
 import nl.elec332.gradle.minecraft.moddev.ProjectType;
 import nl.elec332.gradle.minecraft.moddev.projects.ModMetadata;
 import nl.elec332.gradle.minecraft.moddev.projects.forge.ForgeBasedPlugin;
+import nl.elec332.gradle.minecraft.moddev.tasks.GenerateEmptyRefMapTask;
 import nl.elec332.gradle.minecraft.moddev.util.ProjectHelper;
 import org.gradle.api.Project;
 import org.gradle.api.plugins.JavaPlugin;
+import org.gradle.language.jvm.tasks.ProcessResources;
 import org.gradle.util.GradleVersion;
 
 import java.util.function.Consumer;
@@ -20,8 +22,16 @@ public class NeoProjectPlugin extends ForgeBasedPlugin<NeoExtension> {
         super(ProjectType.NEO_FORGE);
     }
 
+    private static final String GENERATE_REFMAP_TASK = "generateEmptyRefMap";
+
     @Override
     protected void addMixinDependencies(Project project) {
+        NeoExtension extension = getExtension(project);
+        GenerateEmptyRefMapTask mm = project.getTasks().create(GENERATE_REFMAP_TASK, GenerateEmptyRefMapTask.class);
+        project.getTasks().named(GENERATE_METADATA, p -> p.dependsOn(mm));
+        if (extension.mainModSource != null) {
+            project.getTasks().named(extension.mainModSource.getProcessResourcesTaskName(), ProcessResources.class, r -> r.from(project.getTasks().named(GENERATE_REFMAP_TASK)));
+        }
     }
 
     @Override

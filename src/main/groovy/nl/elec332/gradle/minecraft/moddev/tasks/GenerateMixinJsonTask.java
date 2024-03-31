@@ -1,8 +1,8 @@
 package nl.elec332.gradle.minecraft.moddev.tasks;
 
 import nl.elec332.gradle.minecraft.moddev.MLProperties;
-import nl.elec332.gradle.minecraft.moddev.util.AbstractGroovyHelper;
 import nl.elec332.gradle.minecraft.moddev.projects.CommonExtension;
+import nl.elec332.gradle.minecraft.moddev.util.AbstractGroovyHelper;
 import nl.elec332.gradle.minecraft.moddev.util.ProjectHelper;
 import org.gradle.api.tasks.Input;
 import org.gradle.api.tasks.Internal;
@@ -12,7 +12,7 @@ import java.util.*;
 /**
  * Created by Elec332 on 12-03-2024
  */
-public abstract class GenerateMixinJsonTask extends AbstractGenerateFileTask {
+public abstract class GenerateMixinJsonTask extends AbstractGenerateFilesTask {
 
     public GenerateMixinJsonTask() {
         super("generated/mixins");

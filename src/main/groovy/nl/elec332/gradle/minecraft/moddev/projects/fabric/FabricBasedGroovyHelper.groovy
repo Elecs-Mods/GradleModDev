@@ -33,4 +33,8 @@ class FabricBasedGroovyHelper {
         })
     }
 
+    static String getRefMapName(Project project) {
+        return project.loom.mixin.defaultRefmapName.get()
+    }
+
 }

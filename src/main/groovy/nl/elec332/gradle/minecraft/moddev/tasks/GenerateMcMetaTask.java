@@ -6,13 +6,15 @@ import nl.elec332.gradle.minecraft.moddev.util.ProjectHelper;
 import org.gradle.api.provider.Property;
 import org.gradle.api.tasks.Input;
 
+import java.io.File;
+
 /**
  * Created by Elec332 on 28-03-2024
  */
 public abstract class GenerateMcMetaTask extends AbstractGenerateFileTask {
 
     public GenerateMcMetaTask() {
-        super("generated/mcmeta");
+        super("generated/mcmeta", "pack.mcmeta");
         getPackDescription().convention(ProjectHelper.getStringProperty(getProject(), MLProperties.MOD_NAME) + " resources");
         getPackFormat().convention(1);
     }
@@ -23,8 +25,9 @@ public abstract class GenerateMcMetaTask extends AbstractGenerateFileTask {
     @Input
     public abstract Property<Integer> getPackFormat();
 
-    protected void generate() {
-        AbstractGroovyHelper.writeFile(getOutputFile("pack.mcmeta"),
+    @Override
+    protected void generate(File file) {
+        AbstractGroovyHelper.writeFile(file,
                 "{\n" +
                     "  \"pack\": {\n" +
                     "    \"description\": \"" + getPackDescription().get() + "\",\n" +
