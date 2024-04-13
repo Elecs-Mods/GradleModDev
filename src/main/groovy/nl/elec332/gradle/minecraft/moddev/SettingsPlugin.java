@@ -39,6 +39,8 @@ public class SettingsPlugin implements Plugin<Settings> {
 
         public boolean useBuildNumber = false;
 
+        public boolean addModMaven = true;
+
         private final Set<ProjectType> loaders = new HashSet<>();
 
         public void enableVanilla() {
@@ -77,6 +79,7 @@ public class SettingsPlugin implements Plugin<Settings> {
         private boolean superCommonMode = false;
         private boolean useBuildNumber = false;
         private boolean singleProject = false;
+        private boolean modMaven = false;
 
         @NotNull
         public Project getCommonProject() {
@@ -102,6 +105,10 @@ public class SettingsPlugin implements Plugin<Settings> {
             return useBuildNumber;
         }
 
+        public boolean useModMaven() {
+            return modMaven;
+        }
+
         @Nullable
         public Project getProject(@NotNull ProjectType ml) {
             return projects.get(Objects.requireNonNull(ml));
@@ -118,7 +125,7 @@ public class SettingsPlugin implements Plugin<Settings> {
         settings.pluginManagement(p -> {
             p.repositories(h -> {
                 h.gradlePluginPortal();
-                addRepositories(h);
+                addRepositories(h, false);
             });
         });
 
@@ -183,10 +190,11 @@ public class SettingsPlugin implements Plugin<Settings> {
             } else {
                 throw new UnsupportedOperationException("Please define a modloader type!");
             }
+            mdd.singleProject = singleProject[0];
             mdd.generateModInfo = cfg.generateModInfo;
             mdd.superCommonMode = cfg.superCommonMode;
             mdd.useBuildNumber = cfg.useBuildNumber;
-            mdd.singleProject = singleProject[0];
+            mdd.modMaven = cfg.addModMaven;
         });
 
         settings.getRootProject().setName((String) Objects.requireNonNull(settings.getExtensions().getExtraProperties().get(MLProperties.MOD_NAME)));
@@ -233,7 +241,7 @@ public class SettingsPlugin implements Plugin<Settings> {
         project.getExtensions().getExtraProperties().set(RuntimeProjectPluginRequests.PROP_NAME, reg);
     }
 
-    public static void addRepositories(RepositoryHandler h) {
+    public static void addRepositories(RepositoryHandler h, boolean modMaven) {
         h.mavenCentral();
         h.maven(m -> {
             m.setName("Forge");
@@ -255,6 +263,12 @@ public class SettingsPlugin implements Plugin<Settings> {
             m.setName("Sponge Snapshots");
             m.setUrl("https://repo.spongepowered.org/repository/maven-public/");
         });
+        if (modMaven) {
+            h.maven(m -> {
+                m.setName("ModMaven");
+                m.setUrl("https://modmaven.dev");
+            });
+        }
     }
 
     public static ModDevDetails getDetails(Project project) {

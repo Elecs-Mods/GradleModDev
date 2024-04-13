@@ -3,10 +3,13 @@ package nl.elec332.gradle.minecraft.moddev.projects;
 import nl.elec332.gradle.minecraft.moddev.MLProperties;
 import nl.elec332.gradle.minecraft.moddev.ModLoader;
 import nl.elec332.gradle.minecraft.moddev.SettingsPlugin;
+import nl.elec332.gradle.minecraft.moddev.tasks.AllModJarSetupTask;
+import nl.elec332.gradle.minecraft.moddev.tasks.RemapJarTask;
 import nl.elec332.gradle.minecraft.moddev.util.ProjectHelper;
 import org.gradle.api.Action;
 import org.gradle.api.Plugin;
 import org.gradle.api.Project;
+import org.gradle.api.plugins.JavaPlugin;
 import org.gradle.api.publish.PublishingExtension;
 import org.gradle.api.publish.maven.MavenArtifact;
 import org.gradle.api.publish.maven.MavenPublication;
@@ -26,7 +29,6 @@ public abstract class AbstractPluginSC implements Plugin<Project> {
     @Override
     public final void apply(@NotNull Project target) {
         ProjectHelper.checkProperties(target, Set.of(MLProperties.ELECLOADER_VERSION));
-        target.getRepositories().mavenLocal();
 
         Project commonProject = SettingsPlugin.getDetails(target).getCommonProject();
         target.beforeEvaluate(p -> {
@@ -35,15 +37,17 @@ public abstract class AbstractPluginSC implements Plugin<Project> {
         });
 
         applyPlugin(target, ProjectHelper.getSourceSets(target).maybeCreate(SourceSet.MAIN_SOURCE_SET_NAME));
+
+        target.afterEvaluate(p -> commonProject.getTasks().named(AllModJarSetupTask.getSetupTaskName(ALL_JAR_TASK_NAME), AllModJarSetupTask.class, j -> j.addJar((RemapJarTask) p.getTasks().getByName(AbstractPlugin.REMAPPED_JAR_TASK_NAME))));
     }
 
     protected abstract void applyPlugin(Project target, SourceSet main);
 
     protected static final String COMMON_CONFIG_NAME = "commonImplementation";
     protected static final String DEV_ALL_JAR_TASK_NAME = "devAllJar";
-    protected static final String REMAPPED_JAR_TASK_NAME = "remappedJar";
+    protected static final String ALL_JAR_TASK_NAME = "allJar";
     protected static final String MOD_PUBLICATION = "modPublication";
-    protected static final String MAPPINGS = "Mappings";
+    public static final String MAPPINGS = "Mappings";
 
     protected static void addToPublication(Project target, Object archive) {
         addToPublication(target, archive, null);

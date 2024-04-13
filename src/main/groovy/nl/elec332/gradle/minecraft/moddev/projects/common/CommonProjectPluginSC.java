@@ -3,11 +3,13 @@ package nl.elec332.gradle.minecraft.moddev.projects.common;
 import nl.elec332.gradle.minecraft.moddev.MLProperties;
 import nl.elec332.gradle.minecraft.moddev.ModLoader;
 import nl.elec332.gradle.minecraft.moddev.projects.AbstractPluginSC;
+import nl.elec332.gradle.minecraft.moddev.tasks.AllModJarSetupTask;
 import nl.elec332.gradle.minecraft.moddev.util.GradleInternalHelper;
 import nl.elec332.gradle.minecraft.moddev.util.ProjectHelper;
 import org.gradle.api.Project;
 import org.gradle.api.artifacts.Configuration;
 import org.gradle.api.file.DuplicatesStrategy;
+import org.gradle.api.initialization.dsl.ScriptHandler;
 import org.gradle.api.plugins.BasePlugin;
 import org.gradle.api.plugins.JavaPlugin;
 import org.gradle.api.publish.maven.plugins.MavenPublishPlugin;
@@ -53,12 +55,25 @@ public final class CommonProjectPluginSC extends AbstractPluginSC {
         addToPublication(target, devAllTask);
         target.getTasks().named(BasePlugin.ASSEMBLE_TASK_NAME, t -> t.dependsOn(devAllTask));
 
+        var allTask = AllModJarSetupTask.createTaskChain(target, ALL_JAR_TASK_NAME);
+        allTask.configure(j -> {
+            j.getArchiveClassifier().set("all");
+            j.getManifest().attributes(Map.of("Implementation-Title", "all"));
+        });
+        addToPublication(target, allTask);
+        target.getTasks().named(BasePlugin.ASSEMBLE_TASK_NAME, t -> t.dependsOn(allTask));
+
         getModPublication(target).from(target.getComponents().getByName(GradleInternalHelper.JAVA_MAIN_COMPONENT_NAME));
     }
 
     private void importProperties(Project target) {
-        Configuration loader = target.getConfigurations().create(LOADER_CONFIG_NAME);
-        target.getDependencies().add(LOADER_CONFIG_NAME, "nl.elec332.minecraft.loader:ElecLoader:" + ProjectHelper.getStringProperty(target, MLProperties.ELECLOADER_VERSION));
+        ScriptHandler scriptHandler = GradleInternalHelper.getGradleSettings(target).getBuildscript();
+        scriptHandler.getRepositories().maven(m -> m.setUrl("https://modmaven.dev"));
+        Configuration loader = scriptHandler.getConfigurations().create(LOADER_CONFIG_NAME);
+        scriptHandler.getDependencies().add(LOADER_CONFIG_NAME, "nl.elec332.minecraft.loader:ElecLoader:" + ProjectHelper.getStringProperty(target, MLProperties.ELECLOADER_VERSION));
+
+//        Configuration loader = target.getConfigurations().create(LOADER_CONFIG_NAME);
+//        target.getDependencies().add(LOADER_CONFIG_NAME, "nl.elec332.minecraft.loader:ElecLoader:" + ProjectHelper.getStringProperty(target, MLProperties.ELECLOADER_VERSION));
         Set<File> loaders = loader.resolve();
         if (loaders.size() != 1) {
             throw new RuntimeException();

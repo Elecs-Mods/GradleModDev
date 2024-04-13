@@ -41,7 +41,7 @@ public abstract class AbstractPluginMLSC extends AbstractPluginSC {
             j.getManifest().attributes(Map.of(MAPPINGS, Objects.requireNonNull(Objects.requireNonNull(ProjectHelper.getPlugin(target).getProjectType().getModLoader()).getMapping())));
         });
 
-        target.afterEvaluate(p -> addToPublication(commonProject, target.getTasks().named(AbstractPlugin.REMAPPED_JAR_TASK_NAME)));
+        target.afterEvaluate(p -> addToPublication(commonProject, target.getTasks().named(JavaPlugin.JAR_TASK_NAME), a -> a.builtBy(target.getTasks().named(AbstractPlugin.REMAPPED_JAR_TASK_NAME))));
 
         SourceSet ss = ProjectHelper.getSourceSets(target).maybeCreate("runTarget");
         ss.getJava().setSrcDirs(Collections.emptyList());

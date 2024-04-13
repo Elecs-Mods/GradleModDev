@@ -6,7 +6,7 @@ plugins {
 }
 
 group "nl.elec332.gradle.minecraft"
-version "1.0.10-Beta"
+version "1.1.0"
 
 repositories {
     mavenCentral()
@@ -21,6 +21,8 @@ dependencies {
     shadowed("com.moandjiezana.toml:toml4j:0.7.2") {
         transitive = false
     }
+    shadowed("net.neoforged:srgutils:1.0.0") //Shadow this as well
+    shadow("org.ow2.asm:asm-commons:9.6")    //Not you...
 }
 
 javadoc {

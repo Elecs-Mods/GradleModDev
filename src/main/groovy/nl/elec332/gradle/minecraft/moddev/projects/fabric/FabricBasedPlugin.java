@@ -42,7 +42,7 @@ public abstract class FabricBasedPlugin<E extends FabricBasedExtension> extends 
         File rootDir = project.getLayout().getBuildDirectory().dir("generated/refmaps").get().getAsFile();
         project.afterEvaluate(p -> ProjectHelper.getSourceSets(p).forEach(ss -> {
             File ssRefMap = new File(rootDir,  ss.getName() + "/" + FabricBasedGroovyHelper.getRefMapName(p));
-            TaskProvider<JavaCompile> compileTask = p.getTasks().named(ss.getCompileJavaTaskName(), JavaCompile.class, c -> {
+            var compileTask = p.getTasks().named(ss.getCompileJavaTaskName(), JavaCompile.class, c -> {
                 List<String> args = c.getOptions().getCompilerArgs();
                 args.removeIf(s -> s.contains("-AoutRefMapFile="));
                 args.add("-AoutRefMapFile=" + ssRefMap.getPath());
