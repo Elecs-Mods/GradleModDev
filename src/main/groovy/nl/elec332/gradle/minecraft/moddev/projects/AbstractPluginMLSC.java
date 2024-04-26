@@ -22,10 +22,10 @@ public abstract class AbstractPluginMLSC extends AbstractPluginSC {
     @Override
     protected final void applyPlugin(Project target, SourceSet main) {
         Project commonProject = SettingsPlugin.getDetails(target).getCommonProject();
-        commonProject.afterEvaluate(p -> p.getConfigurations().getByName(COMMON_CONFIG_NAME).getDependencies().forEach(dep -> target.getDependencies().add(JavaPlugin.IMPLEMENTATION_CONFIGURATION_NAME, dep)));
+        target.getDependencies().add(JavaPlugin.IMPLEMENTATION_CONFIGURATION_NAME, target.getDependencies().project(Map.of("path", commonProject.getPath(), "configuration", COMMON_CONFIG_NAME)));
+        target.getDependencies().add(JavaPlugin.COMPILE_ONLY_CONFIGURATION_NAME, target.getDependencies().project(Map.of("path", commonProject.getPath(), "configuration", COMMON_JAR_CONFIG_NAME)));
         SourceSet commonMain = ProjectHelper.getSourceSets(commonProject).maybeCreate(SourceSet.MAIN_SOURCE_SET_NAME);
         target.beforeEvaluate(trgt -> trgt.getTasks().named(AbstractPlugin.CHECK_CLASSES_TASK, CheckCompileTask.class, t -> t.checkSource(commonMain)));
-        target.getDependencies().add(JavaPlugin.COMPILE_ONLY_CONFIGURATION_NAME, commonProject);
 
         commonProject.getTasks().named(JavaPlugin.JAVADOC_TASK_NAME, Javadoc.class, t -> t.source(main.getJava()));
         commonProject.getTasks().named("sourcesJar", Jar.class, t -> {
@@ -40,8 +40,6 @@ public abstract class AbstractPluginMLSC extends AbstractPluginSC {
             j.from(commonMain.getOutput());
             j.getManifest().attributes(Map.of(MAPPINGS, Objects.requireNonNull(Objects.requireNonNull(ProjectHelper.getPlugin(target).getProjectType().getModLoader()).getMapping())));
         });
-
-        target.afterEvaluate(p -> addToPublication(commonProject, target.getTasks().named(JavaPlugin.JAR_TASK_NAME), a -> a.builtBy(target.getTasks().named(AbstractPlugin.REMAPPED_JAR_TASK_NAME))));
 
         SourceSet ss = ProjectHelper.getSourceSets(target).maybeCreate("runTarget");
         ss.getJava().setSrcDirs(Collections.emptyList());

@@ -287,7 +287,7 @@ public abstract class GenerateMappingsTask extends DefaultTask {
     private static ModLoader.Mapping getMappings(JarFile jarFile) throws IOException {
         String type = jarFile.getManifest().getMainAttributes().getValue(AbstractPluginSC.MAPPINGS);
         if (type == null || type.isEmpty()) {
-            throw new IllegalArgumentException("No mappings found in " + jarFile);
+            throw new IllegalArgumentException("No mappings found in " + jarFile.getName());
         }
         ModLoader.Mapping mappings;
         try {

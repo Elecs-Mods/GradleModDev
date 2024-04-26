@@ -41,6 +41,8 @@ public class SettingsPlugin implements Plugin<Settings> {
 
         public boolean addModMaven = true;
 
+        public boolean allJarOnly = false;
+
         private final Set<ProjectType> loaders = new HashSet<>();
 
         public void enableVanilla() {
@@ -80,6 +82,7 @@ public class SettingsPlugin implements Plugin<Settings> {
         private boolean useBuildNumber = false;
         private boolean singleProject = false;
         private boolean modMaven = false;
+        private boolean allJarOnly = false;
 
         @NotNull
         public Project getCommonProject() {
@@ -107,6 +110,10 @@ public class SettingsPlugin implements Plugin<Settings> {
 
         public boolean useModMaven() {
             return modMaven;
+        }
+
+        public boolean allJarOnly() {
+            return allJarOnly;
         }
 
         @Nullable
@@ -163,6 +170,9 @@ public class SettingsPlugin implements Plugin<Settings> {
 
         settings.getGradle().settingsEvaluated(s -> {
             System.out.println("Java: "  + System.getProperty("java.version") + ", JVM: "  + System.getProperty("java.vm.version") + " ("  + System.getProperty("java.vendor") + "), Arch: " + System.getProperty("os.arch"));
+            if (cfg.allJarOnly && !cfg.superCommonMode) {
+                throw new IllegalArgumentException("allJarOnly is only supported for superCommon projects!");
+            }
             if (cfg.superCommonMode) {
                 cfg.rootIsCommon = true;
             }
@@ -195,6 +205,7 @@ public class SettingsPlugin implements Plugin<Settings> {
             mdd.superCommonMode = cfg.superCommonMode;
             mdd.useBuildNumber = cfg.useBuildNumber;
             mdd.modMaven = cfg.addModMaven;
+            mdd.allJarOnly = cfg.allJarOnly;
         });
 
         settings.getRootProject().setName((String) Objects.requireNonNull(settings.getExtensions().getExtraProperties().get(MLProperties.MOD_NAME)));

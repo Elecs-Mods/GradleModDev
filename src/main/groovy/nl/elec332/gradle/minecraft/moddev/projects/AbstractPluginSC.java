@@ -33,8 +33,13 @@ public abstract class AbstractPluginSC implements Plugin<Project> {
         Project commonProject = SettingsPlugin.getDetails(target).getCommonProject();
         target.beforeEvaluate(p -> {
             var devTask = target.getTasks().named(AbstractPlugin.DEV_JAR_TASK_NAME, Jar.class, j -> j.getManifest().attributes(Map.of(MAPPINGS, ModLoader.Mapping.NAMED)));
-            addToPublication(commonProject, devTask);
+            if (!SettingsPlugin.getDetails(target).allJarOnly()) {
+                addToPublication(commonProject, devTask);
+            }
         });
+        if (!SettingsPlugin.getDetails(target).allJarOnly()) {
+            target.afterEvaluate(p -> addToPublication(commonProject, target.getTasks().named(JavaPlugin.JAR_TASK_NAME), a -> a.builtBy(target.getTasks().named(AbstractPlugin.REMAPPED_JAR_TASK_NAME))));
+        }
 
         applyPlugin(target, ProjectHelper.getSourceSets(target).maybeCreate(SourceSet.MAIN_SOURCE_SET_NAME));
 
@@ -48,6 +53,7 @@ public abstract class AbstractPluginSC implements Plugin<Project> {
     protected static final String ALL_JAR_TASK_NAME = "allJar";
     protected static final String MOD_PUBLICATION = "modPublication";
     public static final String MAPPINGS = "Mappings";
+    protected static final String COMMON_JAR_CONFIG_NAME = "commonJarOutput";
 
     protected static void addToPublication(Project target, Object archive) {
         addToPublication(target, archive, null);
