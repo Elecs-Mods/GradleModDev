@@ -380,7 +380,8 @@ public class ModMetadataImpl implements ModMetadata {
         return switch (this.loader) {
             case FABRIC -> "fabric.mod.json";
             case QUILT -> "quilt.mod.json";
-            case FORGE, NEO_FORGE -> "META-INF/mods.toml";
+            case FORGE -> "META-INF/mods.toml";
+            case NEO_FORGE -> "META-INF/neoforge.mods.toml"; //TODO: multi-file production
             default -> throw new UnsupportedOperationException();
         };
     }

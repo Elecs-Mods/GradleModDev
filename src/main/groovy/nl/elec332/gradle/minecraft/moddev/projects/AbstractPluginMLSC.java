@@ -41,7 +41,8 @@ public abstract class AbstractPluginMLSC extends AbstractPluginSC {
             j.getManifest().attributes(Map.of(MAPPINGS, Objects.requireNonNull(Objects.requireNonNull(ProjectHelper.getPlugin(target).getProjectType().getModLoader()).getMapping())));
         });
 
-        SourceSet ss = ProjectHelper.getSourceSets(target).maybeCreate("runTarget");
+        //SourceSet cannot be named 'runTarget', because NeoGradle will then attempt to make actual run configurations from it...
+        SourceSet ss = ProjectHelper.getSourceSets(target).maybeCreate("modRunTarget");
         ss.getJava().setSrcDirs(Collections.emptyList());
         ss.getResources().setSrcDirs(Collections.emptyList());
         var copyMod = target.getTasks().register("copyMod", Copy.class, t -> {

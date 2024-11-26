@@ -31,7 +31,9 @@ class NeoGroovyHelper {
             runs {
                 configureEach {
                     workingDirectory project.rootProject.file("run/" + ProjectType.getIdentifier(project) + "/" + it.name)
-                    modSource Objects.requireNonNull(extension.runtimeSource)
+                    if (extension.runtimeSource != null) {
+                        modSource extension.runtimeSource
+                    }
                     if (extension.loggingMarkers != null) {
                         systemProperty 'forge.logging.markers', extension.loggingMarkers
                     }
@@ -41,12 +43,13 @@ class NeoGroovyHelper {
                 }
                 if (extension.addDataGenerator) {
                     data {
-                        programArguments.addAll '--mod', ProjectHelper.getStringProperty(project, MLProperties.MOD_ID), '--all', '--output', file('src/generated/resources/').getAbsolutePath(), '--existing', file('src/main/resources/').getAbsolutePath()
+                        arguments.addAll '--mod', ProjectHelper.getStringProperty(project, MLProperties.MOD_ID), '--all', '--output', file('src/generated/resources/').getAbsolutePath(), '--existing', file('src/main/resources/').getAbsolutePath()
+                        //runType "data"
                     }
                 }
             }
-            runs.maybeCreate("client")
-            runs.maybeCreate("server")
+            runs.maybeCreate("client")//.runType "client"
+            runs.maybeCreate("server")//.runType "server"
         })
     }
 

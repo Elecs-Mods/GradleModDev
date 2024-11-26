@@ -138,7 +138,7 @@ public abstract class AbstractPlugin<E extends CommonExtension> implements Plugi
                 }
             }
             inputs.property("version", target.getVersion());
-            pr.filesMatching(List.of("/META-INF/mods.toml", "pack.mcmeta", "/fabric.mod.json", "/quilt.mod.json", "/*.txt"), f -> f.expand(inputs.getProperties(), d -> d.getEscapeBackslash().set(true)).filter(s -> s.replace("\\$", "$")));
+            pr.filesMatching(List.of("/META-INF/neoforge.mods.toml", "/META-INF/mods.toml", "pack.mcmeta", "/fabric.mod.json", "/quilt.mod.json", "/*.txt"), f -> f.expand(inputs.getProperties(), d -> d.getEscapeBackslash().set(true)).filter(s -> s.replace("\\$", "$")));
         });
 
         target.afterEvaluate(p -> {

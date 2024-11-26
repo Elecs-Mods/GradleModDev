@@ -10,6 +10,7 @@ import org.gradle.api.file.Directory;
 import org.gradle.api.plugins.ExtraPropertiesExtension;
 import org.gradle.api.plugins.JavaLibraryPlugin;
 import org.gradle.api.plugins.JavaPluginExtension;
+import org.gradle.api.specs.NotSpec;
 import org.gradle.api.tasks.SourceSet;
 import org.gradle.api.tasks.compile.JavaCompile;
 import org.gradle.api.tasks.javadoc.Javadoc;
@@ -37,7 +38,7 @@ public class AllProjectsPlugin implements Plugin<Project> {
         setProperties(target, null);
 
         target.getExtensions().configure(JavaPluginExtension.class, e -> {
-            e.getToolchain().getLanguageVersion().set(JavaLanguageVersion.of(cfg.javaVersion));
+            e.getToolchain().getLanguageVersion().set(JavaLanguageVersion.of(cfg.javaToolchainVersion));
             e.setSourceCompatibility(JavaVersion.toVersion(cfg.javaVersion));
             e.setTargetCompatibility(JavaVersion.toVersion(cfg.javaVersion));
             e.getSourceSets().whenObjectAdded(ss -> configureSourceSet(target, ss));
@@ -45,6 +46,7 @@ public class AllProjectsPlugin implements Plugin<Project> {
             e.getSourceSets().getByName(SourceSet.MAIN_SOURCE_SET_NAME, ss -> ss.getResources().srcDir(GENERATED_RESOURCES));
             e.withSourcesJar();
             e.withJavadocJar();
+            e.disableAutoTargetJvm();
         });
     }
 
@@ -64,6 +66,9 @@ public class AllProjectsPlugin implements Plugin<Project> {
         target.getPluginManager().apply(IdeaPlugin.class);
         target.getPluginManager().apply(EclipsePlugin.class);
         target.beforeEvaluate(p -> {
+            p.getTasks().withType(JavaCompile.class).matching(new NotSpec<>(AbstractPlugin.notNeoTask)).configureEach(c -> {
+                c.getOptions().getRelease().set(cfg.javaToolchainVersion);
+            });
             p.getTasks().withType(JavaCompile.class).matching(AbstractPlugin.notNeoTask).configureEach(c -> {
                 c.getOptions().setEncoding(UTF8);
                 c.getOptions().getRelease().set(cfg.javaVersion);
