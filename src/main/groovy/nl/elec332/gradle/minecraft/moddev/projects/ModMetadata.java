@@ -89,7 +89,7 @@ public interface ModMetadata extends Serializable {
         BOTH, CLIENT, SERVER
     }
 
-    String getFileLocation();
+    Set<String> getFileLocation();
 
     Set<String> getMixins();
 

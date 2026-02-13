@@ -36,7 +36,7 @@ public abstract class AbstractGenerateFileTask extends DefaultTask {
     protected abstract RegularFileProperty getOutputFile();
 
     @TaskAction
-    private void generateAction() {
+    public void generateAction() {
         File output = getOutputFile().getAsFile().get();
         getProject().delete(output);
         generate(output);

@@ -43,7 +43,7 @@ public abstract class AbstractPluginMLSC extends AbstractPluginSC {
 
         //SourceSet cannot be named 'runTarget', because NeoGradle will then attempt to make actual run configurations from it...
         SourceSet ss = ProjectHelper.getSourceSets(target).maybeCreate("modRunTarget");
-        ss.getJava().setSrcDirs(Collections.emptyList());
+        ss.getJava().setSrcDirs(Collections.singleton(commonProject.getLayout().getBuildDirectory().get().dir("tmp/modRunSrc").getAsFile()));
         ss.getResources().setSrcDirs(Collections.emptyList());
         var copyMod = target.getTasks().register("copyMod", Copy.class, t -> {
             t.from(main.getOutput());

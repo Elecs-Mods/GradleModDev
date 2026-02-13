@@ -68,7 +68,7 @@ public abstract class AbstractPlugin<E extends CommonExtension> implements Plugi
         AllProjectsPlugin.setProperties(target, getProjectType());
 
         TaskContainer tasks = target.getTasks();
-        SettingsPlugin.addRepositories(target.getRepositories(), cfg.useModMaven());
+        SettingsPlugin.addRepositories(target.getRepositories(), cfg.useModMaven(), cfg.useMavenLocal());
         ProjectHelper.checkProperties(target, projectProps);
         target.setVersion(ProjectHelper.getStringProperty(target, MLProperties.MOD_VERSION));
         target.setGroup(ProjectHelper.getStringProperty(target, MLProperties.MOD_GROUP_ID));

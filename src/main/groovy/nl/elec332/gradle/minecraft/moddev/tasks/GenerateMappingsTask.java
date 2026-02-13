@@ -60,7 +60,7 @@ public abstract class GenerateMappingsTask extends DefaultTask {
     abstract RegularFileProperty getOutputTargets();
 
     @TaskAction
-    private void runTask() throws IOException {
+    public void runTask() throws IOException {
         File output = getOutputMappings().get().getAsFile();
         File targetsFile = getOutputTargets().get().getAsFile();
         if (!output.getName().endsWith(".tsrg") || !targetsFile.getName().endsWith(".targets")) {

@@ -18,7 +18,7 @@ public abstract class GenerateModInfoTask extends AbstractGenerateFilesTask {
     public abstract Property<ModMetadata> getMetaData();
 
     protected void generate() {
-        AbstractGroovyHelper.writeFile(getOutputFile(getMetaData().get().getFileLocation()), getMetaData().get().toString());
+        getMetaData().get().getFileLocation().forEach(file -> AbstractGroovyHelper.writeFile(getOutputFile(file), getMetaData().get().toString()));
     }
 
 }

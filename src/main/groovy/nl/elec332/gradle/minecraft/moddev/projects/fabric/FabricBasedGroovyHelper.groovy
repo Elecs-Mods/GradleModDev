@@ -1,9 +1,11 @@
 package nl.elec332.gradle.minecraft.moddev.projects.fabric
 
+import nl.elec332.gradle.minecraft.moddev.MLProperties
 import nl.elec332.gradle.minecraft.moddev.ProjectType
 import nl.elec332.gradle.minecraft.moddev.projects.CommonMLExtension
 import nl.elec332.gradle.minecraft.moddev.util.ProjectHelper
 import org.gradle.api.Project
+import org.gradle.util.GradleVersion
 
 /**
  * Created by Elec332 on 05-09-2023
@@ -28,6 +30,9 @@ class FabricBasedGroovyHelper {
             loom {
                 mixin {
                     defaultRefmapName = ProjectHelper.getMixinRefMap(project)
+                    if (GradleVersion.version(ProjectHelper.getStringProperty(project, MLProperties.FABRIC_LOOM_VERSION)) >= GradleVersion.version("1.10.0")) {
+                        useLegacyMixinAp = true
+                    }
                 }
             }
         })

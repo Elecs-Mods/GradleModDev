@@ -11,7 +11,6 @@ import org.gradle.plugin.management.internal.PluginRequests;
 import org.gradle.plugin.management.internal.autoapply.AutoAppliedPluginHandler;
 import org.gradle.plugin.management.internal.autoapply.AutoAppliedPluginRegistry;
 import org.gradle.plugin.management.internal.autoapply.CompositeAutoAppliedPluginRegistry;
-import org.gradle.plugin.management.internal.autoapply.DefaultAutoAppliedPluginHandler;
 import org.gradle.plugin.use.PluginId;
 import org.gradle.plugin.use.internal.DefaultPluginId;
 import org.jetbrains.annotations.NotNull;
@@ -36,8 +35,18 @@ public final class RuntimeProjectPluginRequests implements AutoAppliedPluginRegi
 
     public static void inject(Settings settings) {
         AutoAppliedPluginHandler autoAppliedPluginHandler = ((SettingsInternal) settings).getServices().get(AutoAppliedPluginHandler.class);
+        Class<?> targetClass;
         try {
-            Field f = DefaultAutoAppliedPluginHandler.class.getDeclaredField("registry");
+            targetClass = Class.forName("org.gradle.plugin.management.internal.autoapply.DefaultAutoAppliedPluginHandler");
+        } catch (ClassNotFoundException e) {
+            try {
+                targetClass = Class.forName("org.gradle.plugin.management.internal.DefaultPluginHandler");
+            } catch (ClassNotFoundException ex) {
+                throw new RuntimeException(ex);
+            }
+        }
+        try {
+            Field f = targetClass.getDeclaredField("registry");
             f.setAccessible(true);
             f.set(autoAppliedPluginHandler, new CompositeAutoAppliedPluginRegistry(List.of((AutoAppliedPluginRegistry) f.get(autoAppliedPluginHandler), new RuntimeProjectPluginRequests())));
         } catch (Exception e) {

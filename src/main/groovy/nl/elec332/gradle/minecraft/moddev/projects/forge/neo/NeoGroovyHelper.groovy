@@ -5,6 +5,7 @@ import nl.elec332.gradle.minecraft.moddev.ProjectType
 import nl.elec332.gradle.minecraft.moddev.projects.forge.ForgeBasedExtension
 import nl.elec332.gradle.minecraft.moddev.util.ProjectHelper
 import org.gradle.api.Project
+import org.gradle.util.GradleVersion
 
 /**
  * Created by Elec332 on 04-09-2023
@@ -43,8 +44,12 @@ class NeoGroovyHelper {
                 }
                 if (extension.addDataGenerator) {
                     data {
+                        if (GradleVersion.version(ProjectHelper.getStringProperty(project, MLProperties.MC_VERSION)) >= GradleVersion.version("1.21.4")) {
+                            runType "clientData"
+                        } else {
+                            runType "data"
+                        }
                         arguments.addAll '--mod', ProjectHelper.getStringProperty(project, MLProperties.MOD_ID), '--all', '--output', file('src/generated/resources/').getAbsolutePath(), '--existing', file('src/main/resources/').getAbsolutePath()
-                        //runType "data"
                     }
                 }
             }

@@ -68,6 +68,9 @@ public class ModMetadataImpl implements ModMetadata {
             if (other.data.containsKey(other.mixinEntry())) {
                 this.data.mergeWith(MappedData.ofStringCollection(other.mixinEntry(), other.data.getStringCollection(other.mixinEntry())));
             }
+            if (other.data.containsKey("named_forgemixins")) {
+                this.data.mergeWith(MappedData.ofStringCollection("named_forgemixins", other.data.getStringCollection("named_forgemixins")));
+            }
         } else {
             throw new UnsupportedOperationException();
         }
@@ -133,6 +136,9 @@ public class ModMetadataImpl implements ModMetadata {
     @Override
     public void mixin(String s) {
         this.data.mergeWith(MappedData.ofStringCollection(mixinEntry(), List.of(s)));
+        if (this.loader == ModLoader.FORGE) {
+            this.data.mergeWith(MappedData.ofStringCollection("named_" + mixinEntry(), List.of("named_" + s)));
+        }
     }
 
     @Override
@@ -376,12 +382,12 @@ public class ModMetadataImpl implements ModMetadata {
 
     @Override
     @SuppressWarnings("UnnecessaryDefault")
-    public String getFileLocation() {
+    public Set<String> getFileLocation() {
         return switch (this.loader) {
-            case FABRIC -> "fabric.mod.json";
-            case QUILT -> "quilt.mod.json";
-            case FORGE -> "META-INF/mods.toml";
-            case NEO_FORGE -> "META-INF/neoforge.mods.toml"; //TODO: multi-file production
+            case FABRIC -> Set.of("fabric.mod.json");
+            case QUILT -> Set.of("quilt.mod.json");
+            case FORGE -> Set.of("META-INF/mods.toml");
+            case NEO_FORGE -> Set.of("META-INF/mods.toml", "META-INF/neoforge.mods.toml");
             default -> throw new UnsupportedOperationException();
         };
     }
@@ -427,7 +433,7 @@ public class ModMetadataImpl implements ModMetadata {
                     map.putString("modLoader", "javafml");
                 }
 
-                Stream.of("mixins", "forgemixins").forEach(mixName -> {
+                Stream.of("mixins", "forgemixins", "named_forgemixins").forEach(mixName -> {
                     if (map.containsKey(mixName)) {
                         map.mergeWith(MappedData.ofMapCollection(mixName, map.removeStringCollection(mixName).stream().map(s -> MappedData.of("config", s)).toList()));
                     }

@@ -4,7 +4,9 @@ import nl.elec332.gradle.minecraft.moddev.MLProperties;
 import nl.elec332.gradle.minecraft.moddev.ProjectType;
 import nl.elec332.gradle.minecraft.moddev.projects.ModMetadata;
 import nl.elec332.gradle.minecraft.moddev.projects.forge.ForgeBasedPlugin;
+import nl.elec332.gradle.minecraft.moddev.tasks.GenerateEmptyRefMapTask;
 import nl.elec332.gradle.minecraft.moddev.tasks.GenerateMcMetaTask;
+import nl.elec332.gradle.minecraft.moddev.tasks.GenerateMixinJsonTask;
 import nl.elec332.gradle.minecraft.moddev.util.ProjectHelper;
 import org.gradle.api.Project;
 import org.gradle.api.Task;
@@ -85,6 +87,14 @@ public class ForgeProjectPlugin extends ForgeBasedPlugin<ForgeExtension> {
                 r.dependsOn(compileTask);
             });
         }));
+
+        project.getTasks().withType(GenerateMixinJsonTask.class).forEach(t -> t.getVariants().add("named_"));
+        ForgeExtension extension = getExtension(project);
+        TaskProvider<GenerateEmptyRefMapTask> mm = project.getTasks().register(GenerateEmptyRefMapTask.DEFAULT_TASK_NAME, GenerateEmptyRefMapTask.class, "named_");
+        project.getTasks().named(GENERATE_METADATA, p -> p.dependsOn(mm));
+        if (extension.mainModSource != null) {
+            project.getTasks().named(extension.mainModSource.getProcessResourcesTaskName(), ProcessResources.class, r -> r.from(mm));
+        }
     }
 
     @Override

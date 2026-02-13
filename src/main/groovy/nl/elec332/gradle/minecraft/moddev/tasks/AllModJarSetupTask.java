@@ -58,7 +58,7 @@ public abstract class AllModJarSetupTask extends DefaultTask {
     public abstract Property<String> getMapping();
 
     @TaskAction
-    private void setup() {
+    public void setup() {
         AllJarTask c = combiner.get();
         c.getMapping().set(getMapping());
         GenerateMappingsTask m = mapper.get();

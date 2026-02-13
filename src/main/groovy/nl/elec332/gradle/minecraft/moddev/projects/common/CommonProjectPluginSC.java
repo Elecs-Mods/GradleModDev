@@ -85,6 +85,7 @@ public final class CommonProjectPluginSC extends AbstractPluginSC {
     private void importProperties(Project target) {
         ScriptHandler scriptHandler = GradleInternalHelper.getGradleSettings(target).getBuildscript();
         scriptHandler.getRepositories().maven(m -> m.setUrl("https://modmaven.dev"));
+        scriptHandler.getRepositories().mavenLocal();
         Configuration loader = scriptHandler.getConfigurations().create(LOADER_CONFIG_NAME);
         scriptHandler.getDependencies().add(LOADER_CONFIG_NAME, "nl.elec332.minecraft.loader:ElecLoader:" + ProjectHelper.getStringProperty(target, MLProperties.ELECLOADER_VERSION));
 

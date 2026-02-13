@@ -26,7 +26,7 @@ public abstract class AbstractGenerateFilesTask extends DefaultTask {
     }
 
     @TaskAction
-    private void generateAction() {
+    public void generateAction() {
         getProject().delete(getOutputDirectory());
         generate();
     }

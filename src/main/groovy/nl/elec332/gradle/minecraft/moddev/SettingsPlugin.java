@@ -44,6 +44,8 @@ public class SettingsPlugin implements Plugin<Settings> {
 
         public boolean allJarOnly = false;
 
+        public boolean mavenLocal = false;
+
         private final Set<ProjectType> loaders = new HashSet<>();
 
         public void enableVanilla() {
@@ -84,6 +86,7 @@ public class SettingsPlugin implements Plugin<Settings> {
         private boolean singleProject = false;
         private boolean modMaven = false;
         private boolean allJarOnly = false;
+        private boolean mavenLocal = false;
 
         @NotNull
         public Project getCommonProject() {
@@ -117,6 +120,10 @@ public class SettingsPlugin implements Plugin<Settings> {
             return allJarOnly;
         }
 
+        public boolean useMavenLocal() {
+            return mavenLocal;
+        }
+
         @Nullable
         public Project getProject(@NotNull ProjectType ml) {
             return projects.get(Objects.requireNonNull(ml));
@@ -133,7 +140,7 @@ public class SettingsPlugin implements Plugin<Settings> {
         settings.pluginManagement(p -> {
             p.repositories(h -> {
                 h.gradlePluginPortal();
-                addRepositories(h, false);
+                addRepositories(h, false, false);
             });
         });
 
@@ -207,6 +214,7 @@ public class SettingsPlugin implements Plugin<Settings> {
             mdd.useBuildNumber = cfg.useBuildNumber;
             mdd.modMaven = cfg.addModMaven;
             mdd.allJarOnly = cfg.allJarOnly;
+            mdd.mavenLocal = cfg.mavenLocal;
         });
 
         settings.getRootProject().setName((String) Objects.requireNonNull(settings.getExtensions().getExtraProperties().get(MLProperties.MOD_NAME)));
@@ -253,7 +261,7 @@ public class SettingsPlugin implements Plugin<Settings> {
         project.getExtensions().getExtraProperties().set(RuntimeProjectPluginRequests.PROP_NAME, reg);
     }
 
-    public static void addRepositories(RepositoryHandler h, boolean modMaven) {
+    public static void addRepositories(RepositoryHandler h, boolean modMaven, boolean mavenLocal) {
         h.mavenCentral();
         h.maven(m -> {
             m.setName("Forge");
@@ -280,6 +288,9 @@ public class SettingsPlugin implements Plugin<Settings> {
                 m.setName("ModMaven");
                 m.setUrl("https://modmaven.dev");
             });
+        }
+        if (mavenLocal) {
+            h.mavenLocal();
         }
     }
 

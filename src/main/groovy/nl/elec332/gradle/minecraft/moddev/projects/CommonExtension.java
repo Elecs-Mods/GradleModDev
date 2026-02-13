@@ -61,7 +61,7 @@ public class CommonExtension {
         public List<String> clientMixins = null;
         public List<String> serverMixins = null;
 
-        public String toJson(Action<Mixin> modifier, Project project) {
+        public String toJson(Action<Mixin> modifier, Project project, String refMapPrefix) {
             boolean hasMixins = false;
             hasMixins |= mixins != null && !mixins.isEmpty();
             hasMixins |= clientMixins != null && !clientMixins.isEmpty();
@@ -87,6 +87,9 @@ public class CommonExtension {
                 String refMap = this.refMap;
                 if (refMap == null || refMap.isEmpty()) {
                     refMap = ProjectHelper.getMixinRefMap(project);
+                }
+                if (refMapPrefix != null) {
+                    refMap = refMapPrefix + refMap;
                 }
                 m.put("refmap", refMap);
             }

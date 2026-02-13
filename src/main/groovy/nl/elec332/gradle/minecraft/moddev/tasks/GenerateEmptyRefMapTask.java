@@ -3,6 +3,7 @@ package nl.elec332.gradle.minecraft.moddev.tasks;
 import nl.elec332.gradle.minecraft.moddev.util.AbstractGroovyHelper;
 import nl.elec332.gradle.minecraft.moddev.util.ProjectHelper;
 
+import javax.inject.Inject;
 import java.io.File;
 
 /**
@@ -10,10 +11,13 @@ import java.io.File;
  */
 public abstract class GenerateEmptyRefMapTask extends AbstractGenerateFileTask {
 
-    public GenerateEmptyRefMapTask() {
+    @Inject
+    public GenerateEmptyRefMapTask(String variant) {
         super("generated/emptyRefMap", null);
-        getFileName().convention(ProjectHelper.getMixinRefMap(getProject()));
+        getFileName().convention((variant == null ? "" : variant) + ProjectHelper.getMixinRefMap(getProject()));
     }
+
+    public static final String DEFAULT_TASK_NAME = "generateEmptyRefMap";
 
     @Override
     protected void generate(File file) {
