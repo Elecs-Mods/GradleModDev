@@ -44,6 +44,7 @@ public class MLProperties {
     public static final String QUILT_VERSION_DEP = "quilt_version_dependency";
 
     public static final String ELECLOADER_VERSION = "elecloader_version";
+    public static final String ELECLOADER_VERSION_DEP = "elecloader_version_dependency";
 
     public static final Set<String> ALL_PROPS;
 

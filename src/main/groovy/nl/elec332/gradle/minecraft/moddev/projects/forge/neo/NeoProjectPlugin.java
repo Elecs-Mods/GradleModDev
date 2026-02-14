@@ -2,6 +2,7 @@ package nl.elec332.gradle.minecraft.moddev.projects.forge.neo;
 
 import nl.elec332.gradle.minecraft.moddev.MLProperties;
 import nl.elec332.gradle.minecraft.moddev.ProjectType;
+import nl.elec332.gradle.minecraft.moddev.SettingsPlugin;
 import nl.elec332.gradle.minecraft.moddev.projects.ModMetadata;
 import nl.elec332.gradle.minecraft.moddev.projects.forge.ForgeBasedPlugin;
 import nl.elec332.gradle.minecraft.moddev.tasks.GenerateEmptyRefMapTask;
@@ -70,6 +71,9 @@ public class NeoProjectPlugin extends ForgeBasedPlugin<NeoExtension> {
         }
 
         if (!metadata.hasDependency("neoforge")) {
+            if (SettingsPlugin.getDetails(project).isSuperCommonMode() && !ProjectHelper.hasProperty(project, MLProperties.NEO_VERSION_DEP)) {
+                return;
+            }
             String dep = ProjectHelper.hasProperty(project, MLProperties.NEO_VERSION_DEP) ? ProjectHelper.getStringProperty(project, MLProperties.NEO_VERSION_DEP) : null;
             metadata.dependsOn("neoforge", dep != null ? dep : (">=" + version));
         }

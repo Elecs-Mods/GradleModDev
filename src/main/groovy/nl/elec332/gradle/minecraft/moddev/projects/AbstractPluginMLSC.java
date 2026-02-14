@@ -1,5 +1,6 @@
 package nl.elec332.gradle.minecraft.moddev.projects;
 
+import nl.elec332.gradle.minecraft.moddev.MLProperties;
 import nl.elec332.gradle.minecraft.moddev.SettingsPlugin;
 import nl.elec332.gradle.minecraft.moddev.tasks.CheckCompileTask;
 import nl.elec332.gradle.minecraft.moddev.util.ProjectHelper;
@@ -66,5 +67,13 @@ public abstract class AbstractPluginMLSC extends AbstractPluginSC {
     }
 
     protected abstract void applyMLPlugin(Project target, SourceSet main, SourceSet run, SourceSet commonMain);
+
+    protected String getElecLoaderDependency(Project target) {
+        if (ProjectHelper.hasProperty(target, MLProperties.ELECLOADER_VERSION_DEP)) {
+            return "" + ProjectHelper.getProperty(target, MLProperties.ELECLOADER_VERSION_DEP);
+        } else {
+            return ">=" + ProjectHelper.getProperty(target, MLProperties.ELECLOADER_VERSION);
+        }
+    }
 
 }

@@ -2,6 +2,7 @@ package nl.elec332.gradle.minecraft.moddev.projects.forge.forge;
 
 import nl.elec332.gradle.minecraft.moddev.MLProperties;
 import nl.elec332.gradle.minecraft.moddev.ProjectType;
+import nl.elec332.gradle.minecraft.moddev.SettingsPlugin;
 import nl.elec332.gradle.minecraft.moddev.projects.ModMetadata;
 import nl.elec332.gradle.minecraft.moddev.projects.forge.ForgeBasedPlugin;
 import nl.elec332.gradle.minecraft.moddev.tasks.GenerateEmptyRefMapTask;
@@ -117,6 +118,9 @@ public class ForgeProjectPlugin extends ForgeBasedPlugin<ForgeExtension> {
         }
 
         if (!metadata.hasDependency("forge")) {
+            if (SettingsPlugin.getDetails(project).isSuperCommonMode() && !ProjectHelper.hasProperty(project, MLProperties.FORGE_VERSION_DEP)) {
+                return;
+            }
             String dep = ProjectHelper.hasProperty(project, MLProperties.FORGE_VERSION_DEP) ? ProjectHelper.getStringProperty(project, MLProperties.FORGE_VERSION_DEP) : null;
             metadata.dependsOn("forge", dep != null ? dep : (">=" + version));
         }

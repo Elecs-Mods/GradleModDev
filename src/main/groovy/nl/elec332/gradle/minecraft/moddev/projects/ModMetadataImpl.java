@@ -13,7 +13,6 @@ import org.gradle.api.Action;
 import org.gradle.api.Project;
 
 import java.util.*;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 /**
@@ -220,7 +219,7 @@ public class ModMetadataImpl implements ModMetadata {
                 @Override
                 public void setAuthors(Collection<String> s) {
                     if (ModMetadataImpl.this.loader == ModLoader.QUILT) {
-                        ModMetadataImpl.this.data.mergeWith(MappedData.of("metadata", MappedData.of(b -> b.putMap("contributors", s.stream().collect(Collectors.toMap(t -> t, t -> "Author"))))));
+                        ModMetadataImpl.this.data.mergeWith(MappedData.of("metadata", MappedData.of(b -> b.putMap("contributors", MappedData.of(m -> s.forEach(a -> m.put(a, "Author")))))));
                     } else {
                         ModMetadataImpl.this.data.mergeWith(MappedData.ofStringCollection("authors", s));
                     }
@@ -279,9 +278,14 @@ public class ModMetadataImpl implements ModMetadata {
         }
 
         m = new MappedData();
-        iData.mergeWith(MappedData.ofMapCollection(key, List.of(m)));
         m.putString(id, modId);
-        return m;
+        iData.mergeWith(MappedData.ofMapCollection(key, List.of(m)));
+        for (MappedData m2 : iData.getMapCollection(key).toList()) {
+            if (modId.equals(m2.getString(id))) {
+                return m2;
+            }
+        }
+        throw new RuntimeException("Failed to add or fetch dependency `" + modId + "`");
     }
 
     @Override

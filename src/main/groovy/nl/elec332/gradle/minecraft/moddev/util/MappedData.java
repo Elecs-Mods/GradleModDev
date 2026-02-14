@@ -3,7 +3,6 @@ package nl.elec332.gradle.minecraft.moddev.util;
 import java.io.Serializable;
 import java.util.*;
 import java.util.function.Consumer;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 /**
@@ -37,6 +36,10 @@ public class MappedData implements Serializable {
         return new LinkedHashMap<>();
     }
 
+    private static <T> Collection<T> newCollectionImpl() {
+        return new ArrayList<>();
+    }
+
     public MappedData() {
         this(newMapImpl());
     }
@@ -54,29 +57,38 @@ public class MappedData implements Serializable {
     private final Map<String, Object> data;
 
     public void putString(String key, String value) {
+        Objects.requireNonNull(key);
         this.data.put(key, value);
     }
 
     public void put(String key, Object value) {
+        Objects.requireNonNull(key);
         validateSingleObject(value);
         this.data.put(key, value);
     }
 
     public void putStringCollection(String key, Collection<String> value) {
+        Objects.requireNonNull(key);
         if (root) {
             throw new UnsupportedOperationException();
         }
-        this.data.put(key, new ArrayList<>(value));
+        Collection<String> ret = newCollectionImpl();
+        ret.addAll(value);
+        this.data.put(key, ret);
     }
 
     public void putMapCollection(String key, Collection<MappedData> value) {
+        Objects.requireNonNull(key);
         if (root) {
             throw new UnsupportedOperationException();
         }
-        this.data.put(key, value.stream().map(m -> m.data).collect(Collectors.toList()));
+        Collection<Map<String, Object>> ret = newCollectionImpl();
+        value.stream().map(m -> m.data).forEach(ret::add);
+        this.data.put(key, ret);
     }
 
     public void putMap(String key, MappedData value) {
+        Objects.requireNonNull(key);
         if (root) {
             throw new UnsupportedOperationException();
         }
@@ -84,11 +96,14 @@ public class MappedData implements Serializable {
     }
 
     public void putMap(String key, Map<String, ?> value) {
+        Objects.requireNonNull(key);
         if (root) {
             throw new UnsupportedOperationException();
         }
-        validateMap(value);
-        this.data.put(key, value);
+        validateMap(value, false);
+        Map<String, Object> ret = newMapImpl();
+        ret.putAll(value);
+        this.data.put(key, ret);
     }
 
     public String getString(String entry) {
@@ -151,7 +166,9 @@ public class MappedData implements Serializable {
     }
 
     public MappedData copy() {
-        return new MappedData(new HashMap<>(this.data));
+        Map<String, Object> ret = newMapImpl();
+        merge(ret, this.data);
+        return new MappedData(ret);
     }
 
     public Map<String, ?> getbackedMap() {
@@ -160,61 +177,96 @@ public class MappedData implements Serializable {
 
     @SuppressWarnings({"rawtypes", "unchecked"})
     private static void merge(Map origin, Map extra) {
+        Objects.requireNonNull(origin);
         if (extra == null || extra.isEmpty()){
-            return;
-        }
-        if (origin.isEmpty()) {
-            origin.putAll(extra);
             return;
         }
         extra.forEach((key, value) -> {
             if (!(key instanceof String)) {
-                throw new UnsupportedOperationException();
+                throw new UnsupportedOperationException("Invalid key type: " + (key == null ? "null" : key.getClass().getCanonicalName()));
             }
             Object ok = origin.get(key);
             if (ok == null) {
-                origin.put(key, value);
-                return;
+                if (value instanceof Map) {
+                    ok = newMapImpl();
+                    origin.put(key, ok);
+                } else if (value instanceof Collection<?>) {
+                    ok = newCollectionImpl();
+                    origin.put(key, ok);
+                } else {
+                    validateSingleObject(value);
+                    origin.put(key, value);
+                    return;
+                }
             }
             if (ok instanceof Map && value instanceof Map) {
                 merge((Map) ok, (Map) value);
                 return;
             }
             if (value instanceof Collection && ok instanceof Collection) {
-                ((Collection) ok).addAll((Collection) value);
+                merge((Collection) ok, (Collection) value);
                 return;
             }
             throw new UnsupportedOperationException();
         });
     }
 
+    @SuppressWarnings({"rawtypes", "unchecked"})
+    private static void merge(Collection origin, Collection extra) {
+        Objects.requireNonNull(origin);
+        if (extra == null || extra.isEmpty()){
+            return;
+        }
+        extra.forEach(value -> {
+            if (value instanceof Map) {
+                Map ret = newMapImpl();
+                merge(ret, (Map) value);
+                origin.add(ret);
+                return;
+            }
+            if (value instanceof Collection) {
+                Collection ret = newCollectionImpl();
+                merge(ret, (Collection) value);
+                origin.add(ret);
+                return;
+            }
+            validateSingleObject(value);
+            origin.add(value);
+        });
+    }
+
     @Override
     public boolean equals(Object obj) {
-        return obj instanceof MappedData && ((MappedData) obj).data.equals(data);
+        return obj instanceof MappedData && ((MappedData) obj).data.equals(this.data);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(data);
+        return Objects.hash(this.data);
     }
 
-    private static void validateMap(Map<?, ?> map) {
+    @Override
+    public String toString() {
+        return this.data.toString();
+    }
+
+    private static void validateMap(Map<?, ?> map, boolean allowSubMaps) {
         map.keySet().forEach(o -> {
             if (o instanceof String) {
                 return;
             }
             throw new IllegalArgumentException("Key must be a String!");
         });
-        map.values().forEach(MappedData::validateObject);
+        map.values().forEach(o -> MappedData.validateObject(o, allowSubMaps));
     }
 
-    private static void validateObject(Object o) {
+    private static void validateObject(Object o, boolean allowMaps) {
         if (o instanceof Collection) {
-            ((Collection<?>) o).forEach(MappedData::validateObject);
+            ((Collection<?>) o).forEach(co -> MappedData.validateObject(co, allowMaps));
             return;
         }
-        if (o instanceof Map) {
-            validateMap((Map<?, ?>) o);
+        if (allowMaps && o instanceof Map) {
+            validateMap((Map<?, ?>) o, true);
             return;
         }
         validateSingleObject(o);
