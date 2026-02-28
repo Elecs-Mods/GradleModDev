@@ -28,7 +28,7 @@ public class SettingsPlugin implements Plugin<Settings> {
         public int javaToolchainVersion = 21;
         public boolean generateModInfo = true;
 
-        public String ideaExtVersion = "1.1.7";
+        public String ideaExtVersion = "1.4.1";
 
         public boolean quietJavaDoc = true;
 

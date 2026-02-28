@@ -18,6 +18,7 @@ import org.gradle.api.tasks.bundling.AbstractArchiveTask;
 import org.gradle.api.tasks.compile.JavaCompile;
 import org.gradle.jvm.tasks.Jar;
 import org.gradle.language.jvm.tasks.ProcessResources;
+import org.gradle.util.GradleVersion;
 
 import java.io.File;
 import java.util.List;
@@ -38,7 +39,9 @@ public class ForgeProjectPlugin extends ForgeBasedPlugin<ForgeExtension> {
 
     @Override
     protected void beforeProject(Project project) {
-        project.getTasks().withType(AbstractPublishToMaven.class, m -> m.dependsOn(REMAP_JAR_TASK));
+        if (!isFG7(project)) {
+            project.getTasks().withType(AbstractPublishToMaven.class, m -> m.dependsOn(REMAP_JAR_TASK));
+        }
 
         GenerateMcMetaTask mm = project.getTasks().create(GENERATE_PACKINFO_TASK, GenerateMcMetaTask.class);
         project.getTasks().named(GENERATE_METADATA, p -> p.dependsOn(mm));
@@ -46,15 +49,22 @@ public class ForgeProjectPlugin extends ForgeBasedPlugin<ForgeExtension> {
 
     @Override
     public void afterRuntimePluginsAdded(Project project) {
-        project.getDependencies().add("minecraft", "net.minecraftforge:forge:" + ProjectHelper.getStringProperty(project, MLProperties.MC_VERSION) + "-" + ProjectHelper.getStringProperty(project, MLProperties.FORGE_VERSION));
+        if (isFG7(project)) {
+            ForgeGroovyHelper.addFG7MinecraftDependency(project);
+        } else {
+            project.getDependencies().add("minecraft", "net.minecraftforge:forge:" + ProjectHelper.getStringProperty(project, MLProperties.MC_VERSION) + "-" + ProjectHelper.getStringProperty(project, MLProperties.FORGE_VERSION));
+        }
         ForgeGroovyHelper.setMinecraftSettings(project);
     }
 
     @Override
     protected void afterProject(Project project) {
         ForgeExtension extension = getExtension(project);
-        ForgeGroovyHelper.setRunSettings(project, extension);
-        ForgeGroovyHelper.setMixinRunSettings(project);
+        boolean fg7 = isFG7(project);
+        ForgeGroovyHelper.setRunSettings(project, extension, fg7);
+        if (!fg7) {
+            ForgeGroovyHelper.setMixinRunSettings(project);
+        }
         if (extension.mainModSource != null) {
             project.getTasks().named(extension.mainModSource.getProcessResourcesTaskName(), ProcessResources.class, r -> r.from(project.getTasks().named(GENERATE_PACKINFO_TASK)));
         }
@@ -128,13 +138,25 @@ public class ForgeProjectPlugin extends ForgeBasedPlugin<ForgeExtension> {
 
     @Override
     protected TaskProvider<? extends AbstractArchiveTask> setupRemapTask(Project project, Task task, TaskProvider<Jar> jarTask) {
-        task.dependsOn(ForgeProjectPlugin.REMAP_JAR_TASK);
+        if (isFG7(project)) {
+            task.dependsOn(JavaPlugin.JAR_TASK_NAME);
+        } else {
+            task.dependsOn(ForgeProjectPlugin.REMAP_JAR_TASK);
+        }
         return jarTask;
     }
 
     @Override
     protected Class<ForgeExtension> extensionType() {
         return ForgeExtension.class;
+    }
+
+    private boolean isFG7(Project project) {
+        String prop = ProjectHelper.getStringProperty(project, MLProperties.FORGE_GRADLE_VERSION).replace("[", "").replace("([)", "");
+        if (prop.contains(",")) {
+            prop = prop.split(",")[0];
+        }
+        return GradleVersion.version(prop).compareTo(GradleVersion.version("7.0.0")) >= 0;
     }
 
 }

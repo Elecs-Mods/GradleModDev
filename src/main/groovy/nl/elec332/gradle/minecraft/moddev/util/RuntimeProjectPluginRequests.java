@@ -2,6 +2,7 @@ package nl.elec332.gradle.minecraft.moddev.util;
 
 import org.gradle.api.Project;
 import org.gradle.api.artifacts.ModuleVersionSelector;
+import org.gradle.api.artifacts.component.ComponentSelector;
 import org.gradle.api.initialization.Settings;
 import org.gradle.api.internal.SettingsInternal;
 import org.gradle.plugin.management.PluginRequest;
@@ -138,6 +139,11 @@ public final class RuntimeProjectPluginRequests implements AutoAppliedPluginRegi
         @Nullable
         @Override
         public ModuleVersionSelector getModule() {
+            return null;
+        }
+
+        // Gradle 9 compatibility
+        public ComponentSelector getSelector() {
             return null;
         }
 
